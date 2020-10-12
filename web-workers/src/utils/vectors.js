@@ -25,7 +25,7 @@ export class Vector2D extends Vector {
     return this.scale(1.0 / value);
   }
 
-  length() {
+  get length() {
     return Math.hypot(...this.components);
   }
 
@@ -34,7 +34,7 @@ export class Vector2D extends Vector {
   }
 
   normalized() {
-    return this.divide(this.length());
+    return this.divide(this.length);
   }
 
 };
