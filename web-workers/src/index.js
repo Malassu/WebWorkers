@@ -1,17 +1,31 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+import * as Konva from '../node_modules/konva/konva.js';
+//import Konva from 'konva';
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+// first we need to create a stage
+var stage = new Konva.Stage({
+    container: 'container',   // id of container <div>
+    width: 500,
+    height: 500
+});
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+// then create layer
+var layer = new Konva.Layer();
+
+// create our shape
+var circle = new Konva.Circle({
+x: stage.width() / 2,
+y: stage.height() / 2,
+radius: 70,
+fill: 'red',
+stroke: 'black',
+strokeWidth: 4
+});
+
+// add the shape to the layer
+layer.add(circle);
+
+// add the layer to the stage
+stage.add(layer);
+
+// draw the image
+layer.draw();

@@ -1,22 +1,25 @@
-import React, { useState, useEffect } from 'react';
+class KonvaView extends HTMLElement {
+    constructor() {
+      self = super();
+        
+      this.renderer = undefined;
+      this.simulation = undefined;
 
-function App() {
-  const [currentData, setCurrentData] = useState(0);
-
-  function StartWorker() {
-    const worker = new Worker('demo_workers.js');
-    worker.postMessage('Hello Worker');
-    worker.onmessage = e => {
-      setCurrentData(e.data);
     }
-  }
 
-  return (
-    <div className="App">
-      <button onClick={StartWorker}>Start</button>
-      <p>Worker data: {currentData}</p>
-    </div>
-  );
+    init() {
+      //window.requestAnimationFrame(this.draw.bind(this));
+    }
+
+    updateSettings() {
+      // TODO pass UI settings to simulation
+    }
+
+    draw() {
+      this.simulation.iterate();
+      this.renderer.render();
+      //window.requestAnimationFrame(this.draw.bind(this));
+    }
 }
-
-export default App;
+  
+customElements.define('konva-view', KonvaView);
