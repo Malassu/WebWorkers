@@ -57,12 +57,25 @@ class BoidWorld {
 
   // Calculate collision forces
   collision() {
+    // 1. Calculate distance d between two boids
+    // 2. Check d - radius of boid 1 - radius of boid 2 <= 0
+    // 3. If false proceed to the next calculation
+    // 4. If true calculate n = normalized(p2 - p1) where p1 is the position of the first boid and p2 the position of the second boid. The normal points at the second boid.
+    // 5. Calculate f1 = dot(v1, -n)*(-n) and f2 = dot(v2, n)*(n).
+    // 6. Calculate a1 = 1.75*f1 + f2 and a2 = 1.75*f2 + f1.
+    // 7. Add acceleration values to each boid.
 
   }
 
   // Calculate explosion forces.
   explosion() {
-
+    // Choose state.explosionsPerTick number of boids.
+    // For each boid B:
+    // 1. Check Math.random() < state.explosionProb
+    // 2. If true proceed else continue to next boid
+    // 3. Get all boids within state.explosionRadius distance from B and for each:
+    // 4. Calculate normal vector n from B to other boid 
+    // 5. Add state.explosionIntensity * dot(v2, n)*(n) to the other boid's acceleration. v2 is the other boid's velocity.
   }
 
 };
