@@ -1,5 +1,4 @@
-import * as Konva from '../node_modules/konva/konva.js';
-//import Konva from 'konva';
+import Konva from 'konva';
 
 // first we need to create a stage
 var stage = new Konva.Stage({
