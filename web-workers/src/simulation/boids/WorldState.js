@@ -13,7 +13,7 @@ class WorldState {
       explosionIntesity: 2.0  // Intensity of explosion.
     };
 
-    Object.keys(defaultState).forEach(key => this[key] = (typeof options[key] === defaultState[key] ) ? options[key] : defaultState[key]);
+    Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === defaultState[key] ) ? options[key] : defaultState[key]);
     
   };
 

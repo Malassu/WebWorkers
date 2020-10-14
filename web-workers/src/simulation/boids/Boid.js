@@ -11,7 +11,8 @@ class Boid {
       maxSpeed: 0.01
     };
 
-    Object.keys(defaultState).forEach(key => this[key] = (typeof options[key] === defaultState[key] ) ? options[key] : defaultState[key]);
+    
+    Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === defaultState[key] ) ? options[key] : defaultState[key]);
   }
 
   tick() {
