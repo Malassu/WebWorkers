@@ -1,4 +1,4 @@
-//import BoidWorld from "./simulation/boids/BoidWorld.js";
+import BoidWorld from "./simulation/boids/BoidWorld.js";
 
 let type = "WebGL"
 if(!PIXI.utils.isWebGLSupported()){
@@ -11,6 +11,7 @@ let app = new PIXI.Application({width: 768, height: 768, forceCanvas: true});
 document.body.appendChild(app.view);
 
 let image = "images/blue_ball_small.png";
+//let world = new BoidWorld();
 
 PIXI.loader
   .add(image)
