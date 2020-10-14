@@ -1,4 +1,4 @@
-export class Vector2D extends Vector {
+export class Vector2D {
   constructor(x, y) {
     this.components = { x, y };
   }
