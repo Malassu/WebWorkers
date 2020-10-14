@@ -18,7 +18,7 @@ class BoidWorld {
 
   // Creates a new boids with random coordinates within bounds.
   _generateBoid() {
-    return new Boid(getRandom2D(this._bounds.x, this._bounds.y));
+    return new Boid({ position: getRandom2D(this._bounds.x, this._bounds.y) });
   }
 
   // Runs next step of the simulation.
