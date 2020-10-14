@@ -11,7 +11,11 @@ let app = new PIXI.Application({width: 768, height: 768, forceCanvas: true});
 document.body.appendChild(app.view);
 
 let image = "images/blue_ball_small.png";
-//let world = new BoidWorld();
+let world = new BoidWorld();
+
+for(var i = 0; i < 5; i++) {
+  world.addBoid();
+}
 
 PIXI.loader
   .add(image)
