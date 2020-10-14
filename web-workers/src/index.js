@@ -13,20 +13,24 @@ document.body.appendChild(app.view);
 let image = "images/blue_ball_small.png";
 let world = new BoidWorld();
 
-for(var i = 0; i < 5; i++) {
+for(var i = 0; i < 1; i++) {
   world.addBoid();
 }
 
-PIXI.loader
-  .add(image)
-  .load(setup);
+world.boids.forEach(boidRender);
 
-function setup() {
-  var x = 100;
-  var y = 100;
-  let ball = new PIXI.Sprite(
-    PIXI.loader.resources[image].texture
-  );
-  ball.position.set(x, y)
-  app.stage.addChild(ball);
+function boidRender(value, index, array) {
+  let x = value["position"]["components"]["x"];
+  let y = value["position"]["components"]["y"];
+  PIXI.loader
+    .add(image)
+    .load(setup);
+
+  function setup() {
+    let ball = new PIXI.Sprite(
+      PIXI.loader.resources[image].texture
+    );
+    ball.position.set(x, y)
+    app.stage.addChild(ball);
+  }
 }
