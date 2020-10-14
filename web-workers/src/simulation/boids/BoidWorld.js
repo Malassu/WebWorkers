@@ -40,7 +40,7 @@ class BoidWorld {
   }
 
   setState(option, value) {
-    this.state.setState(option, value);
+    this._state.setState(option, value);
   }
 
   getState(option) {
