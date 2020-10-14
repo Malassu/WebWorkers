@@ -1,30 +1,27 @@
-import Konva from 'konva';
+//import BoidWorld from "./simulation/boids/BoidWorld.js";
 
-// first we need to create a stage
-var stage = new Konva.Stage({
-    container: 'container',   // id of container <div>
-    width: 500,
-    height: 500
-});
+let type = "WebGL"
+if(!PIXI.utils.isWebGLSupported()){
+  type = "canvas"
+}
+PIXI.utils.sayHello(type)
 
-// then create layer
-var layer = new Konva.Layer();
+let app = new PIXI.Application({width: 768, height: 768, forceCanvas: true});
 
-// create our shape
-var circle = new Konva.Circle({
-x: stage.width() / 2,
-y: stage.height() / 2,
-radius: 70,
-fill: 'red',
-stroke: 'black',
-strokeWidth: 4
-});
+document.body.appendChild(app.view);
 
-// add the shape to the layer
-layer.add(circle);
+let image = "images/blue_ball_small.png";
 
-// add the layer to the stage
-stage.add(layer);
+PIXI.loader
+  .add(image)
+  .load(setup);
 
-// draw the image
-layer.draw();
+function setup() {
+  var x = 100;
+  var y = 100;
+  let ball = new PIXI.Sprite(
+    PIXI.loader.resources[image].texture
+  );
+  ball.position.set(x, y)
+  app.stage.addChild(ball);
+}
