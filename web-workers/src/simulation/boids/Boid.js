@@ -4,11 +4,11 @@ import { Vector2D } from "../../utils/vectors.js";
 class Boid {
   constructor(options) {
     const defaultState = {
-      position = new Vector2D(0, 0),
-      velocity = new Vector2D(0, 0),
-      acceleration = new Vector2D(0, 0),
-      radius = 0.01,
-      maxSpeed = 0.01
+      position: new Vector2D(0, 0),
+      velocity: new Vector2D(0, 0),
+      acceleration: new Vector2D(0, 0),
+      radius: 0.01,
+      maxSpeed: 0.01
     };
 
     Object.keys(defaultState).forEach(key => this[key] = (typeof options[key] === defaultState[key] ) ? options[key] : defaultState[key]);
