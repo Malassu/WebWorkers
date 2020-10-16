@@ -17,7 +17,7 @@ export class Vector2D {
 
   scale(value) {
     return new Vector2D(
-      ...Object.keys(components).map((key) => value*this.components[key])
+      ...Object.values(this.components).map((componentValue) => value*componentValue)
     );
   }
 
@@ -26,7 +26,7 @@ export class Vector2D {
   }
 
   get length() {
-    return Math.hypot(...this.components);
+    return Math.hypot(...Object.values(this.components));
   }
 
   dotProduct({ components }) {
