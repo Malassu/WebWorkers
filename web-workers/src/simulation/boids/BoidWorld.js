@@ -8,6 +8,8 @@ class BoidWorld {
   constructor(state) {
     this._state = new WorldState(state);
     
+    this._generateBoid = this._generateBoid.bind(this);
+
     this._bounds = {
       x: [-1, 1],
       y: [-1, 1]

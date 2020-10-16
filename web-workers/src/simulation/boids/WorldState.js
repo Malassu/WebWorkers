@@ -13,17 +13,17 @@ class WorldState {
       explosionIntesity: 2.0  // Intensity of explosion.
     };
 
-    Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === defaultState[key] ) ? options[key] : defaultState[key]);
+    Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === typeof defaultState[key] ) ? options[key] : defaultState[key]);
     
   };
 
   setState(option, value) {
-    if (this[option !== undefined])
+    if (this[option]!== undefined)
       this[option] = value;
   };
 
   getState(option) {
-    if (this[option !== undefined])
+    if (this[option] !== undefined)
       return this[option];
 
     return Error("Value not defined");

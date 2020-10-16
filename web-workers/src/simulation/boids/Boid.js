@@ -12,7 +12,7 @@ class Boid {
     };
 
     
-    Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === defaultState[key] ) ? options[key] : defaultState[key]);
+    Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === typeof defaultState[key] ) ? options[key] : defaultState[key]);
   }
 
   tick() {
