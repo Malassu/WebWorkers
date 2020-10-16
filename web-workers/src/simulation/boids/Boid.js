@@ -16,14 +16,25 @@ class Boid {
   }
 
   tick() {
-    this.velocity += this.acceleration;
+    this.velocity = this.velocity.add(this.acceleration);
 
     if (this.velocity.length > this.maxSpeed)
       this.velocity = this.velocity.normalized().scale(this.maxSpeed);
+      
+    this.position = this.position.add(this.velocity);
 
     // By default don't accelerate.
-    this.acceleration = Vector2D(0,0);
+    this.acceleration = new Vector2D(0,0);
   }
+
+  get x() {
+    return this.position.components.x;
+  }
+
+  get y() {
+    return this.position.components.y;
+  }
+
 };
 
 export default Boid;
