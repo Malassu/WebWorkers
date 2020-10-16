@@ -37,6 +37,28 @@ export class Vector2D {
     return this.divide(this.length);
   }
 
+  get x() {
+    return this.components.x
+  }
+
+  set x(value) {
+    if (typeof value !== "number")
+      throw Error("Incorrect data type!");
+
+    this.components.x = value;
+  }
+
+  get y() {
+    return this.components.y
+  }
+
+  set y(value) {
+    if (typeof value !== "number")
+      throw Error("Incorrect data type!");
+
+    this.components.y = value;
+  }
+
 };
 
 export const getRandom1D = (min, max) => Math.random() * (max - min) + min;
