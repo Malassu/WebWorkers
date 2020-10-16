@@ -3,6 +3,11 @@ class WorldState {
 
     const defaultState = {
       bounded: true,          // The worlds should have "walls" that boids bounce off of.
+      bounds: {               // The world bounds define 2D range of position values for boids. 
+        x: [-1, 1],
+        y: [-1, 1]
+      },
+      boidRadius: 0.1,
       maxSpeed: 1.0,          // Max speed all boids should follow.
       numOfBoids: 0,          // Current number of boids
       collision: true,        // Boids can bounce off of each other.

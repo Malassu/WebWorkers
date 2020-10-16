@@ -10,22 +10,25 @@ class BoidWorld {
     
     this._generateBoid = this._generateBoid.bind(this);
 
-    this._bounds = {
-      x: [-1, 1],
-      y: [-1, 1]
-    };
-
     this._boids = Array.from({ length: this._state.getState("numOfBoids") }, this._generateBoid);
+
   };
 
   // Creates a new boids with random coordinates within bounds.
   _generateBoid() {
-    return new Boid({ position: getRandom2D(this._bounds.x, this._bounds.y) });
+    const { x, y } = this._state.getState("bounds");
+    const position = getRandom2D(x,y);
+    return new Boid({ 
+      position, 
+      radius: this._state.getState("boidRadius"),
+      maxSpeed: this._state.getState("maxSpeed"),
+      velocity: getRandom2D(x,y).subtract(position)
+    });
   }
 
   // Runs next step of the simulation.
   tick() {
-
+    this._boids.map(boid => boid.tick());
   }
 
   addBoid() {
@@ -51,10 +54,6 @@ class BoidWorld {
 
   get boids() {
     return this._boids;
-  }
-
-  get bounds() {
-    return this._bounds;
   }
 
   // Calculate collision forces
