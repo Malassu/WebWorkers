@@ -29,7 +29,7 @@ export class Vector2D {
     return Math.hypot(...Object.values(this.components));
   }
 
-  dotProduct({ components }) {
+  dot({ components }) {
     return Object.keys(components).reduce((acc, key) => acc + components[key] * this.components[key], 0);
   }
 
