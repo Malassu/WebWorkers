@@ -2,6 +2,20 @@ import WorldState from "./WorldState.js";
 import Boid from "./Boid.js";
 import { getRandom2D, Vector2D } from "../../utils/vectors.js";
 
+// https://stackoverflow.com/questions/19269545/how-to-get-a-number-of-random-elements-from-an-array
+function getRandom(arr, n) {
+  var result = new Array(n),
+      len = arr.length,
+      taken = new Array(len);
+  if (n > len)
+      throw new RangeError("getRandom: more elements taken than available");
+  while (n--) {
+      var x = Math.floor(Math.random() * len);
+      result[n] = arr[x in taken ? taken[x] : x];
+      taken[x] = --len in taken ? taken[len] : len;
+  }
+  return result;
+}
 
 class BoidWorld {
   constructor(state) {
@@ -110,12 +124,33 @@ class BoidWorld {
   // Calculate explosion forces.
   _explosion() {
     // Choose state.explosionsPerTick number of boids.
+    const randomBoids = getRandom(this._boids, this._state.getState("explosionsPerTick"));
+    const explosionRadius = this.getState("explosionRadius");
+    const explosionIntensity = this.getState("explosionIntesity");
+    const explosionProb = this.getState("explosionProb");
+
     // For each boid B:
-    // 1. Check Math.random() < state.explosionProb
-    // 2. If true proceed else continue to next boid
-    // 3. Get all boids within state.explosionRadius distance from B and for each:
-    // 4. Calculate normal vector n from B to other boid 
-    // 5. Add state.explosionIntensity * dot(v2, n)*(n) to the other boid's acceleration. v2 is the other boid's velocity.
+    for (const explosionBoid of randomBoids) {
+      if (Math.random() < explosionProb) {
+        
+        for (const victimBoid of this._boids) {
+          // Notice that n can later be used as a normal vector for calculating the acceleration.
+          let n = victimBoid.position.subtract(explosionBoid.position);
+          const dist = n.length;
+
+          // If dist === 0 assume victimBoid === explosion boid
+          if (dist > 0 && dist < explosionRadius + explosionBoid.radius + victimBoid.radius) {
+            // Calculate normal vector n from explosionBoid to victim
+            n = n.normalized();
+
+            // Add (explosionRadius / dist )*state.explosionIntensity * dot(v2, n)*(n) to the other boid's acceleration. v2 is the other boid's velocity.
+            //console.log(explosionIntensity);
+            victimBoid.acceleration = victimBoid.acceleration.add(n.scale((explosionRadius / dist )*explosionIntensity*n.dot(victimBoid.velocity)));
+          }
+        }
+      }
+    } 
+    
   }
 
 };
