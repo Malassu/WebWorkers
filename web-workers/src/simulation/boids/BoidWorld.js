@@ -40,7 +40,7 @@ class BoidWorld {
       position, 
       radius: this._state.getState("boidRadius"),
       maxSpeed: this._state.getState("maxSpeed"),
-      //velocity: getRandom2D([-maxSpeed, maxSpeed])
+      velocity: getRandom2D([-maxSpeed, maxSpeed])
     });
   }
 
