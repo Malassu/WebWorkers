@@ -59,6 +59,10 @@ export class Vector2D {
     this.components.y = value;
   }
 
+  get copy() {
+    return new Vector2D(this.x, this.y);
+  }
+
 };
 
 export const getRandom1D = (min, max) => Math.random() * (max - min) + min;
