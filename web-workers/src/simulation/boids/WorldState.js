@@ -14,7 +14,7 @@ class WorldState {
       explosion: true,        // Boids can randomly "explode" pushing surrounding boids away. 
       explosionsPerTick: 1,   // Maximum number of explosions per tick NOTE: Should be at most numOfBoids
       explosionProb: 0.01,    // probability of explosion per tick,
-      expolsionRadius: 0.01,  // Radius of explosion
+      explosionRadius: 0.01,  // Radius of explosion
       explosionIntesity: 2.0  // Intensity of explosion.
     };
 
