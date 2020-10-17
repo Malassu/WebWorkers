@@ -35,14 +35,12 @@ class BoidWorld {
     const { x, y } = this._state.getState("bounds");
     const position = getRandom2D(x,y);
     const maxSpeed = this.getState("maxSpeed");
-    const test = getRandom2D([-1.0, 1.0]);
-    console.log(test);
 
     return new Boid({ 
       position, 
       radius: this._state.getState("boidRadius"),
       maxSpeed: this._state.getState("maxSpeed"),
-      velocity: position.add(test).subtract(position)
+      velocity: getRandom2D([-maxSpeed, maxSpeed])
     });
   }
 
