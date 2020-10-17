@@ -34,11 +34,15 @@ class BoidWorld {
   _generateBoid() {
     const { x, y } = this._state.getState("bounds");
     const position = getRandom2D(x,y);
+    const maxSpeed = this.getState("maxSpeed");
+    const test = getRandom2D([-1.0, 1.0]);
+    console.log(test);
+
     return new Boid({ 
       position, 
       radius: this._state.getState("boidRadius"),
       maxSpeed: this._state.getState("maxSpeed"),
-      velocity: getRandom2D(x,y).subtract(position)
+      velocity: position.add(test).subtract(position)
     });
   }
 
@@ -145,7 +149,7 @@ class BoidWorld {
 
             // Add (explosionRadius / dist )*state.explosionIntensity * dot(v2, n)*(n) to the other boid's acceleration. v2 is the other boid's velocity.
             //console.log(explosionIntensity);
-            victimBoid.acceleration = victimBoid.acceleration.add(n.scale((explosionRadius / dist )*explosionIntensity*n.dot(victimBoid.velocity)));
+            victimBoid.acceleration = victimBoid.acceleration.add(n.scale((explosionRadius / dist )*explosionIntensity*2*Math.abs(n.dot(victimBoid.velocity))));
           }
         }
       }
