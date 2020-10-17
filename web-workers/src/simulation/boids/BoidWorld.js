@@ -40,7 +40,7 @@ class BoidWorld {
       position, 
       radius: this._state.getState("boidRadius"),
       maxSpeed: this._state.getState("maxSpeed"),
-      velocity: getRandom2D([-maxSpeed, maxSpeed])
+      //velocity: getRandom2D([-maxSpeed, maxSpeed])
     });
   }
 
@@ -134,6 +134,7 @@ class BoidWorld {
     // For each boid B:
     for (const explosionBoid of randomBoids) {
       if (Math.random() < explosionProb) {
+        explosionBoid.color = "red";
         
         for (const victimBoid of this._boids) {
           // Notice that n can later be used as a normal vector for calculating the acceleration.
@@ -147,7 +148,7 @@ class BoidWorld {
 
             // Add (explosionRadius / dist )*state.explosionIntensity * dot(v2, n)*(n) to the other boid's acceleration. v2 is the other boid's velocity.
             //console.log(explosionIntensity);
-            victimBoid.acceleration = victimBoid.acceleration.add(n.scale((explosionRadius / dist )*explosionIntensity*2*Math.abs(n.dot(victimBoid.velocity))));
+            victimBoid.acceleration = victimBoid.acceleration.add(n.scale((explosionRadius / dist ) * explosionIntensity)).add(n.scale(Math.abs(n.dot(victimBoid.velocity))));
           }
         }
       }
