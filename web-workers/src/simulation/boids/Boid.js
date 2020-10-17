@@ -15,24 +15,50 @@ class Boid {
     Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === typeof defaultState[key] ) ? options[key] : defaultState[key]);
   }
 
-  tick() {
+  tick(bounds) {
     this.velocity = this.velocity.add(this.acceleration);
 
     if (this.velocity.length > this.maxSpeed)
       this.velocity = this.velocity.normalized().scale(this.maxSpeed);
-      
+
     this.position = this.position.add(this.velocity);
+
+    if (this.x < bounds.x[0])
+      this.x = bounds.x[1];
+
+    if (this.x > bounds.x[1])
+      this.x = bounds.x[0];
+
+    if (this.y < bounds.y[0])
+      this.y = bounds.y[1];
+
+    if (this.y > bounds.y[1])
+      this.y = bounds.y[0];
 
     // By default don't accelerate.
     this.acceleration = new Vector2D(0,0);
   }
 
   get x() {
-    return this.position.components.x;
+    return this.position.x;
+  }
+
+  set x(value) {
+    if (typeof value !== "number")
+      throw Error("Incorrect data type!");
+
+    this.position.x = value;
   }
 
   get y() {
-    return this.position.components.y;
+    return this.position.y;
+  }
+
+  set y(value) {
+    if (typeof value !== "number")
+      throw Error("Incorrect data type!");
+
+    this.position.y = value;
   }
 
 };
