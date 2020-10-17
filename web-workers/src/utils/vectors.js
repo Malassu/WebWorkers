@@ -1,5 +1,5 @@
 export class Vector2D {
-  constructor(x, y) {
+  constructor(x=0, y=0) {
     this.components = { x, y };
   }
 
