@@ -134,7 +134,6 @@ class BoidWorld {
     // For each boid B:
     for (const explosionBoid of randomBoids) {
       if (Math.random() < explosionProb) {
-        explosionBoid.color = "red";
         
         for (const victimBoid of this._boids) {
           // Notice that n can later be used as a normal vector for calculating the acceleration.
