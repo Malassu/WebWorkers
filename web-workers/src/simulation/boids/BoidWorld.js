@@ -113,13 +113,40 @@ class BoidWorld {
 
   // Calculate collision forces
   _collision() {
-    // 1. Calculate distance d between two boids
-    // 2. Check d - radius of boid 1 - radius of boid 2 <= 0
-    // 3. If false proceed to the next calculation
-    // 4. If true calculate n = normalized(p2 - p1) where p1 is the position of the first boid and p2 the position of the second boid. The normal points at the second boid.
-    // 5. Calculate f1 = dot(v1, -n)*(-n) and f2 = dot(v2, n)*(n).
-    // 6. Calculate a1 = 2*f1 + f2 and a2 = 1*f2 + f1.
-    // 7. Add acceleration values to each boid.
+    const indices = [ ...this._boids.keys() ];
+
+    // Loop over all boids.
+    for (const index1 of indices) {
+      const boid1 = this._boids[index1];
+      // Loop over boids that index1 has not used.
+      // This way we can updated both boidi and boidj in one iteration and only do one of the symmetrical cases (boidi -> boidj) and (boidj -> boidi)
+      // where (boidi -> boidj) represents boid with index1 = i colliding with boid with index2 = j
+      for (const index2 of [ ...this._boids.keys() ].slice(index1 + 1)) {
+
+        // 1. Calculate distance d between two boids
+        const boid2 = this._boids[index2];
+        const distVec = boid2.position.subtract(boid1.position);
+        
+        // 2. Check d - radius of boid 1 - radius of boid 2 <= 0
+        if (distVec.length <= boid1.radius + boid2.radius) {
+          
+          // 3. If true calculate n = normalized(p2 - p1) where p1 is the position of the first boid and p2 the position of the second boid. The normal points at the second boid.
+          const n = distVec.normalized();
+          const neg_n = n.scale(-1);
+
+          // 4. Calculate f1 = dot(v1, -n)*(-n) and f2 = dot(v2, n)*(n).
+          // Abs is used to deal with the case where dot(v, n) < 0 which would cause the collision to pull the boid towards the other boid.
+          const f1 = neg_n.scale(Math.abs(boid1.velocity.dot(neg_n)));
+          const f2 = n.scale(Math.abs(boid2.velocity.dot(n)));
+
+          // 5. Calculate a1 = 2*f1 - f2 and a2 = 2*f2 + f1.
+          boid1.acceleration = boid1.acceleration.add(f1.scale(2).subtract(f2));
+          boid2.acceleration = boid2.acceleration.add(f2.scale(2).subtract(f1));
+
+        }
+      }
+    }
+    
 
   }
 
@@ -158,3 +185,4 @@ class BoidWorld {
 };
 
 export default BoidWorld;
+
