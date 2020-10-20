@@ -1,68 +1,91 @@
+import BoidWorld from "./simulation/boids/BoidWorld.js";
+
 class App {
-    constructor(simulation, renderer) {
-      // super();
-        
-      this._renderer = renderer;
-      this._simulation = simulation;
+  constructor() {
 
-      // const appTemplate = document.createElement('template');
-      // appTemplate.innerHTML = `
-      //   <style>
-      //     .controls {
-      //       position: absolute;
-      //       margin-left:auto;
-      //       margin-right:0;
-      //       padding: 10px;
-      //       background-color: rgba(0,0,0,0.8);
-      //       border: solid 1px;
-      //       width: 200px;
-      //       height: 300px;
-      //     }
-      //   </style>
-      //   <div class="controls">
-      //     <input type="number" id="amount" value="10">
-      //     <button id="add">Add</button>
-      //   </div>
-      // `;
+    this.image = "images/blue_ball_small.png";
+    this.balls = [];
 
-      // const addButton = appTemplate.getElementById("add")
-      // console.log(addButton);
-      // //addButton.onclick = this.addBoids;
+    // BoidWorld setup
+    const width = 768;
+    const height = 768;
+    this._simulation = new BoidWorld({ 
+      numOfBoids: 1, 
+      bounds: {
+        x: [0, width],
+        y: [0, height]
+      },
+      boidRadius: 10,
+      maxSpeed: 5
+    });
 
-      // this.attachShadow({mode: 'open'});
-      // this.shadowRoot.appendChild(appTemplate.content.cloneNode(true));
+    // PIXI setup
+    let type = "WebGL";
+    if(!PIXI.utils.isWebGLSupported()){
+      type = "canvas"
     }
+    PIXI.utils.sayHello(type)
+    this.app = new PIXI.Application({width: width, height: height, forceCanvas: true});
+    this.app.renderer.backgroundColor = 0xFFFFFF;
+    this.app.view.style.border = "solid";
+    document.body.appendChild(this.app.view);
 
-    addBoids(amount) {
-      Array.from({length: amount}, () => this._simulation.addBoid());
-      // TODO: call add PIXI sprites
-    }
+    // Set texture
+    const circle = new PIXI.Graphics();
+    circle.beginFill(0x000000);
+    circle.lineStyle(0);
+    circle.drawCircle(10, 10, 10);
+    circle.endFill();
 
-    reset() {
-      console.log("JEEJAA");
-      this._simulation.boids.forEach(value => {
-        this._renderer.addBall()
-        //circle.arc(value.x, value.y, value.radius, 0, 2 * Math.PI);
-        //this._renderer.ctx.fill(circle);
-      });
+    const texture = PIXI.RenderTexture.create(circle.width, circle.height);
+    this.app.renderer.render(circle, texture);
+    this.texture = texture;
 
-      this.draw();
-    }
 
-    set simulation(value) {
-      this._simulation = value;
-    }
+    // load
+    PIXI.loader
+      .add(this.image)
+      .load(this.init.bind(this));
+  }
 
-    set renderer(value) {
-      this._renderer = value;
-    }
+  init() {
+    this._simulation.boids.forEach(value => {
+      this.addSprite();
+    });
 
-    draw() {
-      console.log("DRAW");
-      this._simulation.tick();
-      this._renderer.render(this._simulation.boids);
-      requestAnimationFrame(this.draw.bind(this));
-    }
+    this.loop();
+  }
+
+  addBoids(amount) {
+    Array.from({length: amount}, () => {
+      this._simulation.addBoid();
+      this.addSprite();
+    });
+  }
+
+  addSprite() {
+    // let ball = new PIXI.Sprite(PIXI.loader.resources[this.image].texture);
+    let ball = new PIXI.Sprite(this.texture);
+    ball.anchor.set(0.5);
+    this.app.stage.addChild(ball);
+    this.balls.push(ball);
+  }
+
+  render() {
+    this._simulation.boids.forEach((boid, i) => {
+      if (this.balls[i] !== undefined) {
+        let x = boid["position"]["components"]["x"];
+        let y = boid["position"]["components"]["y"];
+        this.balls[i].position.set(x, y);
+      }
+    });
+  }
+
+  loop() {
+    this._simulation.tick();
+    this.render();
+    requestAnimationFrame(this.loop.bind(this));
+  }
 }
   
 export default App;

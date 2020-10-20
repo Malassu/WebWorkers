@@ -31,20 +31,24 @@
       .input-wrap {
         display:table-cell;
       }
+
     </style>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div class="overlay" style="display: none;">
-      <ul>
-        <li>
-          <div class="input-wrap">
-            <input type="number" id="amount" value="10">
-          </div>
-          <button id="addButton">Add</button>
-        </li>
-        <li>
-          <button id="resetButton">Reset</button>
-        </li>
-      </ul>
+    <div class="container">
+      <button id="toggleOverlay">Hide</button>
+      <div class="overlay">
+        <ul>
+          <li>
+            <div class="input-wrap">
+              <input type="number" id="amount" value="10">
+            </div>
+            <button id="addButton">Add</button>
+          </li>
+          <li>
+            <button id="resetButton">Reset</button>
+          </li>
+        </ul>
+      </div>
     </div>
     <!-- <canvas id="testCanvas" width="1000" height="800"></canvas> -->
     <script src="./src/index.js" type="module"></script>
