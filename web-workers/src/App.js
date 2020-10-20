@@ -35,30 +35,18 @@ class App {
 
     addBoids(amount) {
       Array.from({length: amount}, () => this._simulation.addBoid());
+      // TODO: call add PIXI sprites
     }
 
     reset() {
+      console.log("JEEJAA");
       this._simulation.boids.forEach(value => {
-        const circle = new Path2D();
-        circle.arc(value.x, value.y, value.radius, 0, 2 * Math.PI);
-        this._renderer.ctx.fill(circle);
+        this._renderer.addBall()
+        //circle.arc(value.x, value.y, value.radius, 0, 2 * Math.PI);
+        //this._renderer.ctx.fill(circle);
       });
-    
-      // simulation tick
-      this._simulation.tick();
-        // render tick
-      setInterval(() => {
-        this._renderer.ctx.clearRect(0, 0, this._renderer.canvas.width, this._renderer.canvas.height);
-      
-        this._simulation.boids.forEach(value => {
-          const circle = new Path2D();
-          circle.arc(value.x, value.y, value.radius, 0, 2 * Math.PI);
-          this._renderer.ctx.fill(circle);
-        });
-        
-        this._simulation.tick();
-      
-      }, 33);
+
+      this.draw();
     }
 
     set simulation(value) {
@@ -70,8 +58,10 @@ class App {
     }
 
     draw() {
-      this.simulation.iterate();
-      this.renderer.render();
+      console.log("DRAW");
+      this._simulation.tick();
+      this._renderer.render(this._simulation.boids);
+      requestAnimationFrame(this.draw.bind(this));
     }
 }
   

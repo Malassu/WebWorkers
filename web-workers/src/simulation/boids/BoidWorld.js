@@ -185,4 +185,3 @@ class BoidWorld {
 };
 
 export default BoidWorld;
-
