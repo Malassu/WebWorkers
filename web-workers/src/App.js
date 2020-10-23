@@ -86,6 +86,11 @@ class App {
     this.render();
     requestAnimationFrame(this.loop.bind(this));
   }
+
+  reset() {
+    location.reload();
+  }
+
 }
   
 export default App;

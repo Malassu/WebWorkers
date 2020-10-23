@@ -24,6 +24,6 @@ window.onload = () => {
 
   const resetButton = document.querySelector("#resetButton");
   resetButton.addEventListener('click', event => {
-    console.log("TODO");
+    app.reset();
   });
 };
