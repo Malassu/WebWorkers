@@ -23,20 +23,10 @@ class Boid {
 
     this.position = this.position.add(this.velocity);
 
-    if (this.x < bounds.x[0])
-      this.x = bounds.x[1];
+    this.x = Math.max(Math.min(this.x, bounds.x[1]), bounds.x[0]);
+    this.y = Math.max(Math.min(this.y, bounds.y[1]), bounds.y[0]);
 
-    if (this.x > bounds.x[1])
-      this.x = bounds.x[0];
-
-    if (this.y < bounds.y[0])
-      this.y = bounds.y[1];
-
-    if (this.y > bounds.y[1])
-      this.y = bounds.y[0];
-
-    // By default don't accelerate.
-    this.acceleration = new Vector2D(0,0);
+    this.acceleration = this.velocity.scale(-0.02);
   }
 
   get x() {
