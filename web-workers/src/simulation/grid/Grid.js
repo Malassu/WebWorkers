@@ -6,10 +6,16 @@ class Grid {
   constructor(bounds, elementLimit, parent, elements) {
     this._bounds = bounds;
     this._parent = parent;
-    this._children = []; // Note: children are other Grid objects and elements are items we are organizing with the Grid. 
+    this._children = null; // Note: children are other Grid objects and elements are items we are organizing with the Grid. 
+    this._elements = null;
 
     if (elements.length > elementLimit) {
+      // Non leaf nodes store other grids.
       this.subdivide(elementLimit, elements);
+    }
+    else {
+      // Leaf nodes store references to elements
+      this._elements = new Set(elements);
     }
   }
 
@@ -40,14 +46,27 @@ class Grid {
 
       return new Grid(bounds, elementLimit, parent, filteredElements);
     });
+
   }
 
   unsubdivide() {
-    this.children = [];
+    this._elements = this.elements;
+    this.children = null;
   }
 
+  // Check if the Grid should subdivide itself
+  checkSubdivide(elementLimit) {
+    if (!this._elements)
+      throw new TypeError("Not a leaf node");
 
+    if (this._elements.length > elementLimit) {
+      subdivide(elementLimit, this._elements);
 
+      // After subdivision, remove elements as this is no longer a leaf node.
+      this._elements = null;
+      return this.children;
+    }
+  }
 
   get bounds() {
     return this._bounds;
@@ -62,7 +81,12 @@ class Grid {
   }
 
   get elements() {
-    return this._elements;
+    if (this._elements)
+      return this._elements;
+
+    return this.children.map(grid => grid.elements).reduce((acc, curr) => {
+      return new Set([...curr, ...acc]);
+    }, new Set());
   }
 
 };
