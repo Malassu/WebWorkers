@@ -29,6 +29,10 @@ class Boid {
     this.acceleration = this.velocity.scale(-0.02);
   }
 
+  inBounds(bounds) {
+    return this.x >= bounds.x[0] && this.x < bounds.x[1] && this.y >= bounds.y[0] && this.y < bounds.y[1];
+  }
+
   get x() {
     return this.position.x;
   }
