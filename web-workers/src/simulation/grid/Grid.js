@@ -7,14 +7,13 @@ class Grid {
     this._bounds = bounds;
     this._parent = parent;
     this._children = []; // Note: children are other Grid objects and elements are items we are organizing with the Grid. 
-    this._elements = new Set(...elements);
 
     if (elements.length > elementLimit) {
       this.subdivide(elementLimit, elements);
     }
   }
 
-  subdivide(elementLimit) {
+  subdivide(elementLimit, elements) {
     // Bounds of new grids
     const childrenBounds = [
       {
@@ -37,7 +36,7 @@ class Grid {
 
     this._children = childrenBounds.map(bounds => {
       // Find elements that are in the new Grid
-      const filteredElements = [...this._elements].filter(element => element.inBounds(bounds));
+      const filteredElements = elements.filter(element => element.inBounds(bounds));
 
       return new Grid(bounds, elementLimit, parent, filteredElements);
     });
@@ -47,15 +46,8 @@ class Grid {
     this.children = [];
   }
 
-  addElement(element) {
-    this.elements.add(element);
-  }
 
-  removeElement(element) {
-    this.elements.delete(element);
-  }
 
-  
 
   get bounds() {
     return this._bounds;
