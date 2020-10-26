@@ -47,6 +47,8 @@ class Grid {
       return new Grid(bounds, elementLimit, parent, filteredElements);
     });
 
+    // After subdivision, remove elements as this is no longer a leaf node.
+    this._elements = null;
   }
 
   unsubdivide() {
@@ -59,13 +61,15 @@ class Grid {
     if (!this._elements)
       throw new TypeError("Not a leaf node");
 
-    if (this._elements.length > elementLimit) {
-      subdivide(elementLimit, this._elements);
+    return this._elements.length > elementLimit;
+  }
 
-      // After subdivision, remove elements as this is no longer a leaf node.
-      this._elements = null;
-      return this.children;
-    }
+  // Check if the Grid's could subdivide.
+  checkUnsubdivide(elementLimit) {
+    if (this._elements)
+      throw new TypeError("A leaf node can't unsubdivide.");
+
+    return this.elements.length > elementLimit;
   }
 
   get bounds() {
