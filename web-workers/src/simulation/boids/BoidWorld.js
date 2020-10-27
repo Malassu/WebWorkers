@@ -115,6 +115,9 @@ class BoidWorld {
   _collision() {
     const indices = [ ...this._boids.keys() ];
 
+    // clear collision status
+    this.boids.forEach((boid) => boid.collided = false);
+
     // Loop over all boids.
     for (const index1 of indices) {
       const boid1 = this._boids[index1];
@@ -143,6 +146,9 @@ class BoidWorld {
           boid1.acceleration = boid1.acceleration.add(f1.scale(2).subtract(f2));
           boid2.acceleration = boid2.acceleration.add(f2.scale(2).subtract(f1));
 
+          // 6. Set collision status
+          boid1.collided = true;
+          boid2.collided = true;
         }
       }
     }

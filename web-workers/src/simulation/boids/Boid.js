@@ -8,7 +8,8 @@ class Boid {
       velocity: new Vector2D(0, 0),
       acceleration: new Vector2D(0, 0),
       radius: 0.01,
-      maxSpeed: 0.01
+      maxSpeed: 0.01,
+      collided: false
     };
 
     
