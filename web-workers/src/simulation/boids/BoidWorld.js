@@ -1,6 +1,181 @@
-import WorldState from "./WorldState.js";
-import Boid from "./Boid.js";
-import { getRandom2D, Vector2D } from "../../utils/vectors.js";
+//import WorldState from "./WorldState.js";
+//import Boid from "./Boid.js";
+//import { getRandom2D, Vector2D } from "../../utils/vectors.js";
+
+class Vector2D {
+  constructor(x=0, y=0) {
+    this.components = { x, y };
+  }
+
+  add({ components }) {
+    return new Vector2D(
+      ...Object.keys(components).map((key) => this.components[key] + components[key])
+    );
+  }
+  
+  subtract({ components }) {
+    return new Vector2D(
+      ...Object.keys(components).map((key) => this.components[key] - components[key])
+    );
+  }
+
+  scale(value) {
+    return new Vector2D(
+      ...Object.values(this.components).map((componentValue) => value*componentValue)
+    );
+  }
+
+  divide(value) {
+    return this.scale(1.0 / value);
+  }
+
+  get length() {
+    return Math.hypot(...Object.values(this.components));
+  }
+
+  dot({ components }) {
+    return Object.keys(components).reduce((acc, key) => acc + components[key] * this.components[key], 0);
+  }
+
+  normalized() {
+    return this.divide(this.length);
+  }
+
+  get x() {
+    return this.components.x
+  }
+
+  set x(value) {
+    if (typeof value !== "number")
+      throw Error("Incorrect data type!");
+
+    this.components.x = value;
+  }
+
+  get y() {
+    return this.components.y
+  }
+
+  set y(value) {
+    if (typeof value !== "number")
+      throw Error("Incorrect data type!");
+
+    this.components.y = value;
+  }
+
+  get copy() {
+    return new Vector2D(this.x, this.y);
+  }
+
+};
+
+const getRandom1D = (min, max) => Math.random() * (max - min) + min;
+const getRandom2D = (firstInterval, secondInterval = firstInterval) => new Vector2D(getRandom1D(...firstInterval), getRandom1D(...secondInterval));
+
+class WorldState {
+  constructor(options) {
+
+    const defaultState = {
+      bounded: true,          // The worlds should have "walls" that boids bounce off of.
+      bounds: {               // The world bounds define 2D range of position values for boids. 
+        x: [-1, 1],
+        y: [-1, 1]
+      },
+      boidRadius: 0.1,
+      maxSpeed: 1.0,          // Max speed all boids should follow.
+      numOfBoids: 0,          // Current number of boids
+      collision: true,        // Boids can bounce off of each other.
+      explosion: true,        // Boids can randomly "explode" pushing surrounding boids away. 
+      explosionsPerTick: 1,   // Maximum number of explosions per tick NOTE: Should be at most numOfBoids
+      explosionProb: 0.01,    // probability of explosion per tick,
+      explosionRadius: 0.01,  // Radius of explosion
+      explosionIntesity: 2.0  // Intensity of explosion.
+    };
+
+    Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === typeof defaultState[key] ) ? options[key] : defaultState[key]);
+    
+  };
+
+  setState(option, value) {
+    if (this[option]!== undefined)
+      this[option] = value;
+  };
+
+  getState(option) {
+    if (this[option] !== undefined)
+      return this[option];
+
+    return Error("Value not defined");
+  };
+
+  // Get active behaviors that should be used for the next tick of the simulation.
+  get behaviors() {
+    return ["collision", "explosion"].filter(type => this[type]);
+  }
+
+};
+
+class Boid {
+  constructor(options) {
+    const defaultState = {
+      position: new Vector2D(0, 0),
+      velocity: new Vector2D(0, 0),
+      acceleration: new Vector2D(0, 0),
+      radius: 0.01,
+      maxSpeed: 0.01
+    };
+
+    
+    Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === typeof defaultState[key] ) ? options[key] : defaultState[key]);
+  }
+
+  tick(bounds) {
+    this.velocity = this.velocity.add(this.acceleration);
+
+    if (this.velocity.length > this.maxSpeed)
+      this.velocity = this.velocity.normalized().scale(this.maxSpeed);
+
+    this.position = this.position.add(this.velocity);
+
+    if (this.x < bounds.x[0])
+      this.x = bounds.x[1];
+
+    if (this.x > bounds.x[1])
+      this.x = bounds.x[0];
+
+    if (this.y < bounds.y[0])
+      this.y = bounds.y[1];
+
+    if (this.y > bounds.y[1])
+      this.y = bounds.y[0];
+
+    // By default don't accelerate.
+    this.acceleration = new Vector2D(0,0);
+  }
+
+  get x() {
+    return this.position.x;
+  }
+
+  set x(value) {
+    if (typeof value !== "number")
+      throw Error("Incorrect data type!");
+
+    this.position.x = value;
+  }
+
+  get y() {
+    return this.position.y;
+  }
+
+  set y(value) {
+    if (typeof value !== "number")
+      throw Error("Incorrect data type!");
+
+    this.position.y = value;
+  }
+
+};
 
 // https://stackoverflow.com/questions/19269545/how-to-get-a-number-of-random-elements-from-an-array
 function getRandom(arr, n) {
@@ -183,5 +358,3 @@ class BoidWorld {
   }
 
 };
-
-export default BoidWorld;

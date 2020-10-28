@@ -1,0 +1,29 @@
+importScripts("./simulation/boids/BoidWorld.js")
+self.simulation = null;
+
+self.onmessage = function(ev) {
+  if (ev.data.msg === 'start') {
+    
+    // BoidWorld setup
+    const width = ev.data.width;
+    const height = ev.data.height;
+    self.simulation = new BoidWorld({ 
+      numOfBoids: 1, 
+      bounds: {
+        x: [0, width],
+        y: [0, height]
+      },
+      boidRadius: 10,
+      maxSpeed: 5
+      });
+    self.postMessage({msg: 'init', boids: simulation.boids}, [simulation.boids])
+  }
+  if (ev.data.msg == 'tick') {
+    self.simulation.tick()
+    self.postMessage({msg: 'ticked', boids: simulation.boids}, [simulation.boids])
+  }
+  if (ev.data.msg == 'add') {
+    self.simulation.addBoid();
+    self.postMessage({msg: 'added'})
+  }
+}

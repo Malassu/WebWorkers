@@ -1,23 +1,14 @@
-import BoidWorld from "./simulation/boids/BoidWorld.js";
+//import BoidWorld from "./simulation/boids/BoidWorld.js";
 
 class App {
   constructor() {
+    this.core = new Worker('src/core_worker.js')
+    this.core.addEventListener('message', this.handleMessageFromWorker);
 
+    const width = 765;
+    const height = 765;
     this.image = "images/blue_ball_small.png";
     this.balls = [];
-
-    // BoidWorld setup
-    const width = 768;
-    const height = 768;
-    this._simulation = new BoidWorld({ 
-      numOfBoids: 1, 
-      bounds: {
-        x: [0, width],
-        y: [0, height]
-      },
-      boidRadius: 10,
-      maxSpeed: 5
-    });
 
     // PIXI setup
     let type = "WebGL";
@@ -49,46 +40,51 @@ class App {
   }
 
   init() {
-    this._simulation.boids.forEach(value => {
-      this.addSprite();
-    });
-
+    this.core.postMessage({msg: 'start', height: 765, width: 765})
     this.loop();
   }
 
   addBoids(amount) {
     Array.from({length: amount}, () => {
-      this._simulation.addBoid();
-      this.addSprite();
+      this.core.postMessage({msg: 'add'});
     });
   }
 
   addSprite() {
-    // let ball = new PIXI.Sprite(PIXI.loader.resources[this.image].texture);
     let ball = new PIXI.Sprite(this.texture);
     ball.anchor.set(0.5);
     this.app.stage.addChild(ball);
     this.balls.push(ball);
   }
 
-  render() {
-    this._simulation.boids.forEach((boid, i) => {
-      if (this.balls[i] !== undefined) {
-        let x = boid["position"]["components"]["x"];
-        let y = boid["position"]["components"]["y"];
-        this.balls[i].position.set(x, y);
-      }
-    });
-  }
-
   loop() {
-    this._simulation.tick();
-    this.render();
+    this.core.postMessage({msg: 'tick'})
     requestAnimationFrame(this.loop.bind(this));
   }
 
   reset() {
     location.reload();
+  }
+
+  handleMessageFromWorker(msg) {
+    console.log('incoming message from worker, msg:', msg);
+    if(msg.data.msg == "init") {
+      msg.data.boids.forEach(value => {
+        this.addSprite();
+      });
+    }
+    if(msg.data.msg == "ticked") {
+      msg.data.boids.forEach((boid, i) => {
+        if (this.balls[i] !== undefined) {
+          let x = boid["position"]["components"]["x"];
+          let y = boid["position"]["components"]["y"];
+          this.balls[i].position.set(x, y);
+        }
+      });
+    }
+    if(msg.data.msg == "added") {
+      this.addSprite();
+    }
   }
 
 }
