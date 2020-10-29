@@ -254,6 +254,10 @@ class BoidWorld {
     return this._boids;
   }
 
+  get toJson() {
+    return JSON.stringify(this._boids.map(boid => ({ x: boid.x, y: boid.y })));
+  }
+
   // For all boids:
   // 1. Check if boid is near a boundary
   // 2. If not do nothing
