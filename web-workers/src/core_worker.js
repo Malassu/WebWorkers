@@ -23,7 +23,8 @@ self.onmessage = function(ev) {
     self.postMessage({msg: 'ticked', boids: simulation.boids}, [simulation.boids])
   }
   if (ev.data.msg == 'add') {
-    self.simulation.addBoid();
-    self.postMessage({msg: 'added'})
+    for(var i = 0; i < ev.data.amount; i++) {
+      self.simulation.addBoid();
+    }
   }
 }

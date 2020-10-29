@@ -2,8 +2,6 @@
 
 class App {
   constructor() {
-    this.core = new Worker('src/core_worker.js')
-    this.core.addEventListener('message', this.handleMessageFromWorker);
 
     const width = 765;
     const height = 765;
@@ -38,15 +36,18 @@ class App {
       .add(this.image)
       .load(this.init.bind(this));
   }
-
-  init() {
-    this.core.postMessage({msg: 'start', height: 765, width: 765})
+  
+   init() {
     this.loop();
+  }
+
+  loop() {
+    requestAnimationFrame(this.loop.bind(this));
   }
 
   addBoids(amount) {
     Array.from({length: amount}, () => {
-      this.core.postMessage({msg: 'add'});
+      this.addSprite();
     });
   }
 
@@ -57,34 +58,8 @@ class App {
     this.balls.push(ball);
   }
 
-  loop() {
-    this.core.postMessage({msg: 'tick'})
-    requestAnimationFrame(this.loop.bind(this));
-  }
-
   reset() {
     location.reload();
-  }
-
-  handleMessageFromWorker(msg) {
-    console.log('incoming message from worker, msg:', msg);
-    if(msg.data.msg == "init") {
-      msg.data.boids.forEach(value => {
-        this.addSprite();
-      });
-    }
-    if(msg.data.msg == "ticked") {
-      msg.data.boids.forEach((boid, i) => {
-        if (this.balls[i] !== undefined) {
-          let x = boid["position"]["components"]["x"];
-          let y = boid["position"]["components"]["y"];
-          this.balls[i].position.set(x, y);
-        }
-      });
-    }
-    if(msg.data.msg == "added") {
-      this.addSprite();
-    }
   }
 
 }
