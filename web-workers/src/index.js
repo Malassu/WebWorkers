@@ -34,7 +34,7 @@ window.onload = () => {
     explosionFreq.innerHTML = freq; 
     if (freq > 0) {
       app.setWorldState('explosion', true);
-      app.setWorldState('explosionProb', freq / 100);
+      app.setWorldState('explosionProb', freq / 60);
     } else {
       app.setWorldState('explosion', false);
     }

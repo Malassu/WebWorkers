@@ -16,7 +16,8 @@ class App {
         y: [0, height]
       },
       boidRadius: 10,
-      maxSpeed: 5
+      explosionRadius: 40,
+      maxSpeed: 1
     });
 
     // PIXI setup
@@ -35,7 +36,12 @@ class App {
     this.colors = ['FF0000', 'F5161B', 'EC2C37', 'E24253', 'D9586F', 'CF6E8A', 'C684A6', 'BC9AC2', 'B3B0DE', 'AAC7FA'];
     this.radius = 10;
     this.animationSpeed = 0.5; // default 1, higher is faster
-    this.textureArray = this.textureGradient(this.colors, this.radius);
+    this.textureArray = this.getCollisionTexture(this.colors, this.radius);
+
+    // Set explosion texture
+    const explosionRadius = this._simulation.getState('explosionRadius')
+    this.explosionTexture = this.getExplosionTexture(explosionRadius);
+    
 
     // load
     PIXI.loader
@@ -43,7 +49,27 @@ class App {
       .load(this.init.bind(this));
   }
 
-  textureGradient(colors, radius) {
+  getExplosionTexture(radius) {
+    const textures = [];
+    const colors = ['000000','FFFFFF'];
+
+    for (const color of colors) {
+      const circle = new PIXI.Graphics();
+      circle.beginFill(`0x${color}`);
+      // circle.lineStyle(2, `0x${color}`);
+      circle.drawCircle(radius, radius, radius);
+      circle.beginHole();
+      circle.drawCircle(radius, radius, radius - 1);
+      circle.endHole();
+      circle.endFill();
+      const texture = PIXI.RenderTexture.create(circle.width, circle.height);
+      this.app.renderer.render(circle, texture);
+      textures.push(texture);
+    }
+    return textures;
+  }
+
+  getCollisionTexture(colors, radius) {
     const textures = [];
     for (const color of colors) {
       const circle = new PIXI.Graphics();
@@ -85,6 +111,24 @@ class App {
     ball.play();
   }
 
+  playExplosionAnimation(x, y) {
+    let explosion = new PIXI.AnimatedSprite(this.explosionTexture);
+    explosion.scale.set(1);
+    // explosion.position.set(x, y);
+    explosion.onComplete = () => {
+      explosion.destroy();
+    }
+    explosion.x = x;
+    explosion.y = y;
+    explosion.loop = false;
+    explosion.animationSpeed = this.animationSpeed * 0.7;
+    explosion.anchor.set(0.5);
+    this.app.stage.addChild(explosion);
+    explosion.gotoAndPlay(0);
+    // const explosion = new PIXI.AnimatedSprite(this.explosionTextures);
+    
+  }
+
   setWorldState(option, value) {
     this._simulation.setState(option, value);
   }
@@ -100,6 +144,10 @@ class App {
         // play animations
         if (boid.collided) {
           sprite.gotoAndPlay(0);
+        }
+        if (boid.exploded) {
+          // TODO add animation
+          this.playExplosionAnimation(x, y)
         }
       }
     });
