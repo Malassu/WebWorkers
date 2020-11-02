@@ -11,7 +11,8 @@ class Boid {
       maxSpeed: 0.01
     };
 
-    
+    this._grid = null;
+
     Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === typeof defaultState[key] ) ? options[key] : defaultState[key]);
   }
 
@@ -53,6 +54,14 @@ class Boid {
       throw Error("Incorrect data type!");
 
     this.position.y = value;
+  }
+
+  get grid() {
+    return this._grid;
+  }
+
+  set grid(grid) {
+    this._grid = grid;
   }
 
 };

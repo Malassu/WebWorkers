@@ -15,6 +15,7 @@ class Grid {
     }
     else {
       // Leaf nodes store references to elements
+      elements.map(element => element.grid = this);
       this._elements = new Set(elements);
     }
   }
