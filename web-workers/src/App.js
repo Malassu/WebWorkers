@@ -85,6 +85,10 @@ class App {
     ball.play();
   }
 
+  setWorldState(option, value) {
+    this._simulation.setState(option, value);
+  }
+
   render() {
     this._simulation.boids.forEach((boid, i) => {
       if (this.balls[i] !== undefined) {

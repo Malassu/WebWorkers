@@ -22,6 +22,24 @@ window.onload = () => {
     app.addBoids(amount);
   });
 
+  const collisionsCheckbox = document.querySelector("#collisions");
+  collisionsCheckbox.addEventListener('click', event => {
+    app.setWorldState('collision', collisionsCheckbox.checked);
+  });
+
+  const explosionsSlider = document.querySelector("#explosions");
+  const explosionFreq = document.querySelector("#explosionFreq")
+  explosionsSlider.addEventListener('change', event => {
+    const freq = explosionsSlider.value / 100;
+    explosionFreq.innerHTML = freq; 
+    if (freq > 0) {
+      app.setWorldState('explosion', true);
+      app.setWorldState('explosionProb', freq / 100);
+    } else {
+      app.setWorldState('explosion', false);
+    }
+  });
+
   const resetButton = document.querySelector("#resetButton");
   resetButton.addEventListener('click', event => {
     console.log("TODO");
