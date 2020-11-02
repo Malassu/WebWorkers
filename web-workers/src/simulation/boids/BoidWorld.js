@@ -162,7 +162,12 @@ class BoidWorld {
       // Loop over boids that index1 has not used.
       // This way we can updated both boidi and boidj in one iteration and only do one of the symmetrical cases (boidi -> boidj) and (boidj -> boidi)
       // where (boidi -> boidj) represents boid with index1 = i colliding with boid with index2 = j
-      for (const boid2 of boid1.grid.parent.parent.elements) {
+      const leafGrids = boid1.grid.parent.parent.leafNodes.filter(grid => boid1.inBounds(grid.bounds));
+      const collidableBoids = leafGrids.reduce((acc, grid) => {
+        return acc.concat([...grid.elements]);
+      }, []);
+
+      for (const boid2 of collidableBoids) {
 
         // 1. Calculate distance d between two boids
         const distVec = boid2.position.subtract(boid1.position);
