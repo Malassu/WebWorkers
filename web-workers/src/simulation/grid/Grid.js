@@ -116,7 +116,7 @@ class Grid {
   }
 
   get parent() {
-    return this._parent;
+    return this._parent || this;
   }
 
   get children() {

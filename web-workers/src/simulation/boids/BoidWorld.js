@@ -162,14 +162,13 @@ class BoidWorld {
       // Loop over boids that index1 has not used.
       // This way we can updated both boidi and boidj in one iteration and only do one of the symmetrical cases (boidi -> boidj) and (boidj -> boidi)
       // where (boidi -> boidj) represents boid with index1 = i colliding with boid with index2 = j
-      for (const index2 of [ ...this._boids.keys() ].slice(index1 + 1)) {
+      for (const boid2 of boid1.grid.parent.parent.elements) {
 
         // 1. Calculate distance d between two boids
-        const boid2 = this._boids[index2];
         const distVec = boid2.position.subtract(boid1.position);
         
         // 2. Check d - radius of boid 1 - radius of boid 2 <= 0
-        if (distVec.length <= boid1.radius + boid2.radius) {
+        if (distVec.length > 0 && distVec.length <= boid1.radius + boid2.radius) {
           
           // 3. If true calculate n = normalized(p2 - p1) where p1 is the position of the first boid and p2 the position of the second boid. The normal points at the second boid.
           const n = distVec.normalized();
