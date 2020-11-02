@@ -10,7 +10,7 @@ class Grid {
     this._elements = null;
     this._depth = depth;
 
-    if (elements.length > elementLimit && depth < 3) {
+    if (elements.length > elementLimit) {
       // Non leaf nodes store other grids.
       this.subdivide(elementLimit, elements);
     }
@@ -18,11 +18,10 @@ class Grid {
       // Leaf nodes store references to elements
       elements.map(element => element.grid = this);
       this._elements = new Set(elements);
-      console.log(depth);
     }
   }
 
-  subdivide(elementLimit, elements) {
+  subdivide(elementLimit, elements = [...this._elements]) {
     // Bounds of new grids
 
     const xMin = this._bounds.x[0];
@@ -56,7 +55,7 @@ class Grid {
       // Find elements that are in the new Grid
       const filteredElements = elements.filter(element => element.inBounds(bounds));
 
-      return new Grid(bounds, elementLimit, parent, filteredElements, this._depth + 1);
+      return new Grid(bounds, elementLimit, this, filteredElements, this._depth + 1);
     });
 
     // After subdivision, remove elements as this is no longer a leaf node.
@@ -66,7 +65,7 @@ class Grid {
 
   unsubdivide() {
     this._elements = this.elements;
-    this.children = null;
+    this._children = null;
   }
 
   // Check if the Grid should subdivide itself
@@ -74,7 +73,7 @@ class Grid {
     if (!this._elements)
       throw new TypeError("Not a leaf node.");
 
-    return this._elements.length > elementLimit;
+    return this._elements.size > elementLimit;
   }
 
   // Check if the Grid's could subdivide.
@@ -82,7 +81,7 @@ class Grid {
     if (this._elements)
       throw new TypeError("A leaf node can't unsubdivide.");
 
-    return this.elements.length > elementLimit;
+    return this.elements.size < elementLimit;
   }
 
   addElement(element) {
@@ -93,6 +92,23 @@ class Grid {
   removeElement(element) {
     if (this._elements)
       this._elements.delete(element);
+  }
+
+  findFittingGrid(element) {
+    if (element.inBounds(this.bounds))
+    return this;
+
+    return this.parent.findFittingGrid(element);
+  }
+
+  findFittingLeaf(element) {
+    if (!element.inBounds(this.bounds))
+      return null;
+
+    if (this._elements)
+      return this;
+
+    return this.leafNodes.find(leaf => element.inBounds(leaf.bounds));
   }
 
   get bounds() {

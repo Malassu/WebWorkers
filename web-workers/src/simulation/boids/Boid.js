@@ -28,10 +28,16 @@ class Boid {
     this.y = Math.max(Math.min(this.y, bounds.y[1]), bounds.y[0]);
 
     this.acceleration = this.velocity.scale(-0.02);
+
+    if (this._grid) {
+      this._grid.removeElement(this);
+      this._grid = this._grid.findFittingGrid(this).findFittingLeaf(this);
+      this._grid.addElement(this);
+    }
   }
 
   inBounds(bounds) {
-    return this.x >= bounds.x[0] && this.x < bounds.x[1] && this.y >= bounds.y[0] && this.y < bounds.y[1];
+    return this.x >= bounds.x[0] && this.x <= bounds.x[1] && this.y >= bounds.y[0] && this.y <= bounds.y[1];
   }
 
   get x() {
