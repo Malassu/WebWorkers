@@ -16,7 +16,8 @@ class App {
         y: [0, height]
       },
       boidRadius: 10,
-      explosionRadius: 40,
+      explosionIntesity: 100,
+      explosionRadius: 100,
       maxSpeed: 1
     });
 
@@ -34,7 +35,7 @@ class App {
 
     // Set texture
     this.colors = ['FF0000', 'F5161B', 'EC2C37', 'E24253', 'D9586F', 'CF6E8A', 'C684A6', 'BC9AC2', 'B3B0DE', 'AAC7FA'];
-    this.radius = 10;
+    this.radius = this._simulation.getState('boidRadius');
     this.animationSpeed = 0.5; // default 1, higher is faster
     this.textureArray = this.getCollisionTexture(this.colors, this.radius);
 
