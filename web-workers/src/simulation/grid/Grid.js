@@ -3,13 +3,14 @@
 // Note: We assume that all elements are within bounds.
 // TODO: Add minimum bounds.
 class Grid {
-  constructor(bounds, elementLimit, parent, elements) {
+  constructor(bounds, elementLimit, parent, elements, depth = 0) {
     this._bounds = bounds;
     this._parent = parent;
     this._children = null; // Note: children are other Grid objects and elements are items we are organizing with the Grid. 
     this._elements = null;
+    this._depth = depth;
 
-    if (elements.length > elementLimit) {
+    if (elements.length > elementLimit && depth < 3) {
       // Non leaf nodes store other grids.
       this.subdivide(elementLimit, elements);
     }
@@ -17,27 +18,37 @@ class Grid {
       // Leaf nodes store references to elements
       elements.map(element => element.grid = this);
       this._elements = new Set(elements);
+      console.log(depth);
     }
   }
 
   subdivide(elementLimit, elements) {
     // Bounds of new grids
+
+    const xMin = this._bounds.x[0];
+    const xMid = this._bounds.x[0] + Math.floor((this._bounds.x[1] - this._bounds.x[0]) / 2);
+    const xMax = this._bounds.x[1];
+
+    const yMin = this._bounds.y[0];
+    const yMid = this._bounds.y[0] + Math.floor((this._bounds.y[1] - this._bounds.y[0]) / 2);
+    const yMax = this._bounds.y[1];
+
     const childrenBounds = [
       {
-        x: [this._bounds.x[0], Math.floor(this._bounds.x[1] / 2)],
-        y: [this._bounds.y[0], Math.floor(this._bounds.y[1] / 2)]
+        x: [xMin, xMid],
+        y: [yMin, yMid]
       },
       {
-        x: [Math.floor(this._bounds.x[1] / 2), this._bounds.x[1]],
-        y: [this._bounds.y[0], Math.floor(this._bounds.y[1] / 2)]
+        x: [xMid, xMax],
+        y: [yMin, yMid]
       },
       {
-        x: [this._bounds.x[0], Math.floor(this._bounds.x[1] / 2)],
-        y: [Math.floor(this._bounds.y[1] / 2), this._bounds.y[1]]
+        x: [xMin, xMid],
+        y: [yMid, yMax]
       },
       {
-        x: [Math.floor(this._bounds.x[1] / 2), this._bounds.x[1]],
-        y: [Math.floor(this._bounds.y[1] / 2), this._bounds.y[1]]
+        x: [xMid, xMax],
+        y: [yMid, yMax]
       }
     ];
 
@@ -45,12 +56,13 @@ class Grid {
       // Find elements that are in the new Grid
       const filteredElements = elements.filter(element => element.inBounds(bounds));
 
-      return new Grid(bounds, elementLimit, parent, filteredElements);
+      return new Grid(bounds, elementLimit, parent, filteredElements, this._depth + 1);
     });
 
     // After subdivision, remove elements as this is no longer a leaf node.
     this._elements = null;
   }
+  
 
   unsubdivide() {
     this._elements = this.elements;
@@ -93,6 +105,13 @@ class Grid {
 
   get children() {
     return this._children;
+  }
+
+  get leafNodes() {
+    if (this._elements)
+      return [this];
+
+    return [].concat.apply([], this.children.map(child => child.leafNodes));
   }
 
   get elements() {
