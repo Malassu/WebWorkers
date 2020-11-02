@@ -79,7 +79,7 @@ class Grid {
   // Check if the Grid's could subdivide.
   checkUnsubdivide(elementLimit) {
     if (this._elements)
-      throw new TypeError("A leaf node can't unsubdivide.");
+      return false;
 
     return this.elements.size < elementLimit;
   }
