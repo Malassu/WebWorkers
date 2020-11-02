@@ -16,11 +16,11 @@ self.onmessage = function(ev) {
       boidRadius: 10,
       maxSpeed: 5
       });
-    self.postMessage({msg: 'init', boids: simulation.boids}, [simulation.boids])
+    self.postMessage({msg: 'init', boids: simulation.toJson})
   }
   if (ev.data.msg == 'tick') {
     self.simulation.tick()
-    self.postMessage({msg: 'ticked', boids: simulation.boids}, [simulation.boids])
+    self.postMessage({msg: 'ticked', boids: simulation.toJson})
   }
   if (ev.data.msg == 'add') {
     for(var i = 0; i < ev.data.amount; i++) {

@@ -38,6 +38,7 @@ class App {
   }
   
    init() {
+    this.addSprite();
     this.loop();
   }
 

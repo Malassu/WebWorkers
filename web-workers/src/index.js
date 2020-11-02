@@ -13,18 +13,20 @@ window.onload = () => {
   function handleMessageFromWorker(msg) {
     console.log('incoming message from worker, msg:', msg);
     if(msg.data.msg == "init") {
-      msg.data.boids.forEach(value => {
+      for(let i = 0; i < msg.data.boids.length; i++) {
         app.addSprite();
-      });
+      }
     }
     if(msg.data.msg == "ticked") {
-      msg.data.boids.forEach((boid, i) => {
-        if (this.balls[i] !== undefined) {
-          let x = boid["position"]["components"]["x"];
-          let y = boid["position"]["components"]["y"];
+      var boids = msg.data.boids
+      for(let i = 0; i < boids.length; i++){
+        if (app.balls[i] !== undefined) {
+          let x = boids[i]["x"];
+          let y = boids[i]["y"];
           app.balls[i].position.set(x, y);
+          core.postMessage({msg: 'tick'});
         }
-      });
+      }
     }
   }
   core.addEventListener('message', handleMessageFromWorker);
