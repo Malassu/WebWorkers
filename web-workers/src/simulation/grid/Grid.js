@@ -59,7 +59,7 @@ class Grid {
   // Check if the Grid should subdivide itself
   checkSubdivide(elementLimit) {
     if (!this._elements)
-      throw new TypeError("Not a leaf node");
+      throw new TypeError("Not a leaf node.");
 
     return this._elements.length > elementLimit;
   }
@@ -70,6 +70,16 @@ class Grid {
       throw new TypeError("A leaf node can't unsubdivide.");
 
     return this.elements.length > elementLimit;
+  }
+
+  addElement(element) {
+    if (this._elements)
+      this._elements.add(element);
+  }
+
+  removeElement(element) {
+    if (this._elements)
+      this._elements.delete(element);
   }
 
   get bounds() {
