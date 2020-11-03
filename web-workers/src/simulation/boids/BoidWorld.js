@@ -1,6 +1,141 @@
-//import WorldState from "./WorldState.js";
-//import Boid from "./Boid.js";
-//import { getRandom2D, Vector2D } from "../../utils/vectors.js";
+class Grid {
+  constructor(bounds, elementLimit, parent, elements, depth = 0) {
+    this._bounds = bounds;
+    this._parent = parent;
+    this._children = null; // Note: children are other Grid objects and elements are items we are organizing with the Grid. 
+    this._elements = null;
+    this._depth = depth;
+
+    if (elements.length > elementLimit) {
+      // Non leaf nodes store other grids.
+      this.subdivide(elementLimit, elements);
+    }
+    else {
+      // Leaf nodes store references to elements
+      elements.map(element => element.grid = this);
+      this._elements = new Set(elements);
+    }
+  }
+
+  subdivide(elementLimit, elements = [...this._elements]) {
+    // Bounds of new grids
+
+    const xMin = this._bounds.x[0];
+    const xMid = this._bounds.x[0] + Math.floor((this._bounds.x[1] - this._bounds.x[0]) / 2);
+    const xMax = this._bounds.x[1];
+
+    const yMin = this._bounds.y[0];
+    const yMid = this._bounds.y[0] + Math.floor((this._bounds.y[1] - this._bounds.y[0]) / 2);
+    const yMax = this._bounds.y[1];
+
+    const childrenBounds = [
+      {
+        x: [xMin, xMid],
+        y: [yMin, yMid]
+      },
+      {
+        x: [xMid, xMax],
+        y: [yMin, yMid]
+      },
+      {
+        x: [xMin, xMid],
+        y: [yMid, yMax]
+      },
+      {
+        x: [xMid, xMax],
+        y: [yMid, yMax]
+      }
+    ];
+
+    this._children = childrenBounds.map(bounds => {
+      // Find elements that are in the new Grid
+      const filteredElements = elements.filter(element => element.inBounds(bounds));
+
+      return new Grid(bounds, elementLimit, this, filteredElements, this._depth + 1);
+    });
+
+    // After subdivision, remove elements as this is no longer a leaf node.
+    this._elements = null;
+  }
+  
+
+  unsubdivide() {
+    this._elements = this.elements;
+    this._children = null;
+  }
+
+  // Check if the Grid should subdivide itself
+  checkSubdivide(elementLimit) {
+    if (!this._elements)
+      throw new TypeError("Not a leaf node.");
+
+    return this._elements.size > elementLimit;
+  }
+
+  // Check if the Grid's could subdivide.
+  checkUnsubdivide(elementLimit) {
+    if (this._elements)
+      return false;
+
+    return this.elements.size < elementLimit;
+  }
+
+  addElement(element) {
+    if (this._elements)
+      this._elements.add(element);
+  }
+
+  removeElement(element) {
+    if (this._elements)
+      this._elements.delete(element);
+  }
+
+  findFittingGrid(element) {
+    if (element.inBounds(this.bounds))
+    return this;
+
+    return this.parent.findFittingGrid(element);
+  }
+
+  findFittingLeaf(element) {
+    if (!element.inBounds(this.bounds))
+      return null;
+
+    if (this._elements)
+      return this;
+
+    return this.leafNodes.find(leaf => element.inBounds(leaf.bounds));
+  }
+
+  get bounds() {
+    return this._bounds;
+  }
+
+  get parent() {
+    return this._parent || this;
+  }
+
+  get children() {
+    return this._children;
+  }
+
+  get leafNodes() {
+    if (this._elements)
+      return [this];
+
+    return [].concat.apply([], this.children.map(child => child.leafNodes));
+  }
+
+  get elements() {
+    if (this._elements)
+      return this._elements;
+
+    return this.children.map(grid => grid.elements).reduce((acc, curr) => {
+      return new Set([...curr, ...acc]);
+    }, new Set());
+  }
+
+};
 
 class Vector2D {
   constructor(x=0, y=0) {
@@ -89,7 +224,8 @@ class WorldState {
       explosionsPerTick: 1,   // Maximum number of explosions per tick NOTE: Should be at most numOfBoids
       explosionProb: 0.01,    // probability of explosion per tick,
       explosionRadius: 0.01,  // Radius of explosion
-      explosionIntesity: 2.0  // Intensity of explosion.
+      explosionIntesity: 2.0,  // Intensity of explosion.
+      gridElementLimit: 20    // Grid leaf nodes have < gridElementLimit elements in them 
     };
 
     Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === typeof defaultState[key] ) ? options[key] : defaultState[key]);
@@ -125,7 +261,8 @@ class Boid {
       maxSpeed: 0.01
     };
 
-    
+    this._grid = null;
+
     Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === typeof defaultState[key] ) ? options[key] : defaultState[key]);
   }
 
@@ -137,20 +274,20 @@ class Boid {
 
     this.position = this.position.add(this.velocity);
 
-    if (this.x < bounds.x[0])
-      this.x = bounds.x[1];
+    this.x = Math.max(Math.min(this.x, bounds.x[1]), bounds.x[0]);
+    this.y = Math.max(Math.min(this.y, bounds.y[1]), bounds.y[0]);
 
-    if (this.x > bounds.x[1])
-      this.x = bounds.x[0];
+    this.acceleration = this.velocity.scale(-0.02);
 
-    if (this.y < bounds.y[0])
-      this.y = bounds.y[1];
+    if (this._grid) {
+      this._grid.removeElement(this);
+      this._grid = this._grid.findFittingGrid(this).findFittingLeaf(this);
+      this._grid.addElement(this);
+    }
+  }
 
-    if (this.y > bounds.y[1])
-      this.y = bounds.y[0];
-
-    // By default don't accelerate.
-    this.acceleration = new Vector2D(0,0);
+  inBounds(bounds) {
+    return this.x >= bounds.x[0] && this.x <= bounds.x[1] && this.y >= bounds.y[0] && this.y <= bounds.y[1];
   }
 
   get x() {
@@ -173,6 +310,14 @@ class Boid {
       throw Error("Incorrect data type!");
 
     this.position.y = value;
+  }
+
+  get grid() {
+    return this._grid;
+  }
+
+  set grid(grid) {
+    this._grid = grid;
   }
 
 };
@@ -202,6 +347,7 @@ class BoidWorld {
     this._explosion = this._explosion.bind(this);
 
     this._boids = Array.from({ length: this._state.getState("numOfBoids") }, this._generateBoid);
+    this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
 
   };
 
@@ -226,7 +372,42 @@ class BoidWorld {
         this[`_${ rule }`]();
     });
 
+
     this._boids.map(boid => boid.tick(this._state.getState("bounds")));
+
+    const elementLimit = this.getState("gridElementLimit");
+
+    // Separate leaf nodes to the ones that require subdivison and the ones that don't.
+    let leafNodes = this._grid.leafNodes.reduce((acc, curr) => {
+      if (curr.checkSubdivide(elementLimit)) {
+        acc.subdivide.push(curr);
+      }
+      else {
+        acc.others.push(curr);
+      }
+
+      return acc;
+    }, {
+      subdivide: [],
+      others: [] 
+    });
+
+    leafNodes.subdivide.map(grid => grid.subdivide(elementLimit));
+
+    // Now consider grids that might need to be unsubdivided
+    leafNodes = leafNodes.others;
+
+    while (true) {
+      leafNodes = leafNodes.map(node => node.parent).filter(parent => parent.checkUnsubdivide(elementLimit));
+
+      if (leafNodes.length) {
+        leafNodes.map(node => node.unsubdivide());
+      }
+      else {
+        break;
+      }
+    }
+
   }
 
   addBoid() {
@@ -254,8 +435,8 @@ class BoidWorld {
     return this._boids;
   }
 
-  get toJson() {
-    return JSON.stringify(this._boids.map(boid => ({ x: boid.x, y: boid.y })));
+  get grid() {
+    return this._grid;
   }
 
   // For all boids:
@@ -300,14 +481,13 @@ class BoidWorld {
       // Loop over boids that index1 has not used.
       // This way we can updated both boidi and boidj in one iteration and only do one of the symmetrical cases (boidi -> boidj) and (boidj -> boidi)
       // where (boidi -> boidj) represents boid with index1 = i colliding with boid with index2 = j
-      for (const index2 of [ ...this._boids.keys() ].slice(index1 + 1)) {
+      for (const boid2 of boid1.grid.parent.parent.elements) {
 
         // 1. Calculate distance d between two boids
-        const boid2 = this._boids[index2];
         const distVec = boid2.position.subtract(boid1.position);
         
         // 2. Check d - radius of boid 1 - radius of boid 2 <= 0
-        if (distVec.length <= boid1.radius + boid2.radius) {
+        if (distVec.length > 0 && distVec.length <= boid1.radius + boid2.radius) {
           
           // 3. If true calculate n = normalized(p2 - p1) where p1 is the position of the first boid and p2 the position of the second boid. The normal points at the second boid.
           const n = distVec.normalized();
@@ -327,6 +507,10 @@ class BoidWorld {
     }
     
 
+  }
+  
+  get toJson() {
+    return JSON.stringify(this._boids.map(boid => ({ x: boid.x, y: boid.y })));
   }
 
   // Calculate explosion forces.
