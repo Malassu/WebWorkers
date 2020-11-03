@@ -8,7 +8,7 @@ self.onmessage = function(ev) {
     const width = ev.data.width;
     const height = ev.data.height;
     self.simulation = new BoidWorld({ 
-      numOfBoids: 1, 
+      numOfBoids: 1000, 
       bounds: {
         x: [0, width],
         y: [0, height]
@@ -16,7 +16,7 @@ self.onmessage = function(ev) {
       boidRadius: 10,
       maxSpeed: 5
       });
-    self.postMessage({msg: 'init', boids: simulation.toJson})
+    self.postMessage({msg: 'ticked', boids: simulation.toJson})
   }
   if (ev.data.msg == 'tick') {
     self.simulation.tick()

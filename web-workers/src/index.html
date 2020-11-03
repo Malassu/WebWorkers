@@ -4,53 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Boids</title>
-    <script src="./src/pixi/pixi.min.js"></script>
   </head>
   <body>
-    <style>
-      div.overlay {
-         position: absolute;
-         margin-left:auto;
-         margin-right:0;
-         padding: 10px;
-         background-color: rgba(0,0,0,0.8);
-         border: solid 1px;
-         width: 200px;
-         height: 300px;
-         display:table;
-       }
-      ul {
-        margin: 0;
-        padding: 0;
-      }
-      li {
-        display: table;
-        list-style:none;
-        padding: 5px;
-      }
-      .input-wrap {
-        display:table-cell;
-      }
-
-    </style>
+    <div id="container"></div>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div class="container">
-      <button id="toggleOverlay">Hide</button>
-      <div class="overlay">
-        <ul>
-          <li>
-            <div class="input-wrap">
-              <input type="number" id="amount" value="10">
-            </div>
-            <button id="addButton">Add</button>
-          </li>
-          <li>
-            <button id="resetButton">Reset</button>
-          </li>
-        </ul>
-      </div>
-    </div>
-    <!-- <canvas id="testCanvas" width="1000" height="800"></canvas> -->
+    <canvas id="testCanvas" width="1000" height="800"></canvas>
     <script src="./src/index.js" type="module"></script>
   </body>
 </html>
