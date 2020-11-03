@@ -18,7 +18,7 @@ window.onload = () => {
     }
   }
   core.addEventListener('message', handleMessageFromWorker);
-  core.postMessage({msg: 'start', height: 765, width: 765})
+  core.postMessage({msg: 'start', height: height, width: width})
 
   setInterval(() => {
     core.postMessage({msg: 'tick'});
