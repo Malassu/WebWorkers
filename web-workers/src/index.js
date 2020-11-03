@@ -12,7 +12,7 @@ window.onload = () => {
       ctx.clearRect(0, 0, width, height);
       boids.forEach(value => {
         const circle = new Path2D();
-        circle.arc(value.x, value.y, 0.1, 0, 2 * Math.PI);
+        circle.arc(value.x, value.y, 10, 0, 2 * Math.PI);
         ctx.fill(circle);
       });
     }
@@ -22,6 +22,6 @@ window.onload = () => {
 
   setInterval(() => {
     core.postMessage({msg: 'tick'});
-  }, 60);
+  }, 33);
 
 };
