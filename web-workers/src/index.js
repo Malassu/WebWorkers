@@ -22,6 +22,6 @@ window.onload = () => {
 
   setInterval(() => {
     core.postMessage({msg: 'tick'});
-  }, 500);
+  }, 60);
 
 };
