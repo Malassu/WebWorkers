@@ -11,7 +11,8 @@ class Boid {
       maxSpeed: 0.01
     };
 
-    
+    this._grid = null;
+
     Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === typeof defaultState[key] ) ? options[key] : defaultState[key]);
   }
 
@@ -23,20 +24,20 @@ class Boid {
 
     this.position = this.position.add(this.velocity);
 
-    if (this.x < bounds.x[0])
-      this.x = bounds.x[1];
+    this.x = Math.max(Math.min(this.x, bounds.x[1]), bounds.x[0]);
+    this.y = Math.max(Math.min(this.y, bounds.y[1]), bounds.y[0]);
 
-    if (this.x > bounds.x[1])
-      this.x = bounds.x[0];
+    this.acceleration = this.velocity.scale(-0.02);
 
-    if (this.y < bounds.y[0])
-      this.y = bounds.y[1];
+    if (this._grid) {
+      this._grid.removeElement(this);
+      this._grid = this._grid.findFittingGrid(this).findFittingLeaf(this);
+      this._grid.addElement(this);
+    }
+  }
 
-    if (this.y > bounds.y[1])
-      this.y = bounds.y[0];
-
-    // By default don't accelerate.
-    this.acceleration = new Vector2D(0,0);
+  inBounds(bounds) {
+    return this.x >= bounds.x[0] && this.x <= bounds.x[1] && this.y >= bounds.y[0] && this.y <= bounds.y[1];
   }
 
   get x() {
@@ -59,6 +60,14 @@ class Boid {
       throw Error("Incorrect data type!");
 
     this.position.y = value;
+  }
+
+  get grid() {
+    return this._grid;
+  }
+
+  set grid(grid) {
+    this._grid = grid;
   }
 
 };

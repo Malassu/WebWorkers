@@ -1,5 +1,6 @@
 import WorldState from "./WorldState.js";
 import Boid from "./Boid.js";
+import Grid from "../grid/Grid.js";
 import { getRandom2D, Vector2D } from "../../utils/vectors.js";
 
 // https://stackoverflow.com/questions/19269545/how-to-get-a-number-of-random-elements-from-an-array
@@ -27,6 +28,7 @@ class BoidWorld {
     this._explosion = this._explosion.bind(this);
 
     this._boids = Array.from({ length: this._state.getState("numOfBoids") }, this._generateBoid);
+    this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
 
   };
 
@@ -51,7 +53,42 @@ class BoidWorld {
         this[`_${ rule }`]();
     });
 
+
     this._boids.map(boid => boid.tick(this._state.getState("bounds")));
+
+    const elementLimit = this.getState("gridElementLimit");
+
+    // Separate leaf nodes to the ones that require subdivison and the ones that don't.
+    let leafNodes = this._grid.leafNodes.reduce((acc, curr) => {
+      if (curr.checkSubdivide(elementLimit)) {
+        acc.subdivide.push(curr);
+      }
+      else {
+        acc.others.push(curr);
+      }
+
+      return acc;
+    }, {
+      subdivide: [],
+      others: [] 
+    });
+
+    leafNodes.subdivide.map(grid => grid.subdivide(elementLimit));
+
+    // Now consider grids that might need to be unsubdivided
+    leafNodes = leafNodes.others;
+
+    while (true) {
+      leafNodes = leafNodes.map(node => node.parent).filter(parent => parent.checkUnsubdivide(elementLimit));
+
+      if (leafNodes.length) {
+        leafNodes.map(node => node.unsubdivide());
+      }
+      else {
+        break;
+      }
+    }
+
   }
 
   addBoid() {
@@ -77,6 +114,10 @@ class BoidWorld {
 
   get boids() {
     return this._boids;
+  }
+
+  get grid() {
+    return this._grid;
   }
 
   // For all boids:
@@ -121,14 +162,18 @@ class BoidWorld {
       // Loop over boids that index1 has not used.
       // This way we can updated both boidi and boidj in one iteration and only do one of the symmetrical cases (boidi -> boidj) and (boidj -> boidi)
       // where (boidi -> boidj) represents boid with index1 = i colliding with boid with index2 = j
-      for (const index2 of [ ...this._boids.keys() ].slice(index1 + 1)) {
+      const leafGrids = boid1.grid.parent.parent.leafNodes.filter(grid => boid1.inBounds(grid.bounds));
+      const collidableBoids = leafGrids.reduce((acc, grid) => {
+        return acc.concat([...grid.elements]);
+      }, []);
+
+      for (const boid2 of collidableBoids) {
 
         // 1. Calculate distance d between two boids
-        const boid2 = this._boids[index2];
         const distVec = boid2.position.subtract(boid1.position);
         
         // 2. Check d - radius of boid 1 - radius of boid 2 <= 0
-        if (distVec.length <= boid1.radius + boid2.radius) {
+        if (distVec.length > 0 && distVec.length <= boid1.radius + boid2.radius) {
           
           // 3. If true calculate n = normalized(p2 - p1) where p1 is the position of the first boid and p2 the position of the second boid. The normal points at the second boid.
           const n = distVec.normalized();
