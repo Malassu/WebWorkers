@@ -15,7 +15,8 @@ class WorldState {
       explosionsPerTick: 1,   // Maximum number of explosions per tick NOTE: Should be at most numOfBoids
       explosionProb: 0.01,    // probability of explosion per tick,
       explosionRadius: 0.01,  // Radius of explosion
-      explosionIntesity: 2.0  // Intensity of explosion.
+      explosionIntesity: 2.0,  // Intensity of explosion.
+      gridElementLimit: 20    // Grid leaf nodes have < gridElementLimit elements in them 
     };
 
     Object.keys(defaultState).forEach(key => this[key] = (typeof options === "object" && typeof options[key] === typeof defaultState[key] ) ? options[key] : defaultState[key]);
