@@ -33,17 +33,23 @@ class BoidWorld {
   };
 
   // Creates a new boids with random coordinates within bounds.
-  _generateBoid() {
+  _generateBoid(addToGrid = false) {
     const { x, y } = this._state.getState("bounds");
     const position = getRandom2D(x,y);
     const maxSpeed = this.getState("maxSpeed");
 
-    return new Boid({ 
+    const boid = new Boid({ 
       position, 
       radius: this._state.getState("boidRadius"),
       maxSpeed: this._state.getState("maxSpeed"),
       velocity: getRandom2D([-maxSpeed, maxSpeed])
     });
+
+    if (addToGrid) {
+      boid.grid = this._grid.findFittingLeaf(boid);
+    }
+    
+    return boid 
   }
 
   // Runs next step of the simulation.
@@ -98,7 +104,7 @@ class BoidWorld {
   }
 
   addBoid() {
-    this._boids.push(this._generateBoid());
+    this._boids.push(this._generateBoid(true));
     this.setState("numOfBoids", this._boids.length);
   }
 
