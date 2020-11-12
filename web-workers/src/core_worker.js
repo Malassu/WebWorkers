@@ -3,7 +3,6 @@ self.simulation = null;
 
 self.onmessage = function(ev) {
   if (ev.data.msg === 'start') {
-    
     // BoidWorld setup
     const width = ev.data.width;
     const height = ev.data.height;
@@ -17,10 +16,10 @@ self.onmessage = function(ev) {
       maxSpeed: 5
       });
     self.postMessage({msg: 'ticked', boids: simulation.toJson})
-  }
-  if (ev.data.msg == 'tick') {
-    self.simulation.tick()
-    self.postMessage({msg: 'ticked', boids: simulation.toJson})
+    setInterval(() => {
+      self.simulation.tick()
+      self.postMessage({msg: 'ticked', boids: simulation.toJson})
+    }, 33);
   }
   if (ev.data.msg == 'add') {
     for(var i = 0; i < ev.data.amount; i++) {
