@@ -53,6 +53,7 @@ class BoidWorld {
   }
 
   // Runs next step of the simulation.
+  // TODO: allow ticking partial boids in order to support concurrency
   tick() {
     // clear behavior status
     this.boids.forEach((boid) => {
@@ -242,7 +243,6 @@ class BoidWorld {
     } 
     
   }
-
 };
 
 export default BoidWorld;
