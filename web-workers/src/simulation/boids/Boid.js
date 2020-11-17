@@ -1,6 +1,8 @@
 // TODO: Add checks for input values.
 import { Vector2D } from "../../utils/vectors.js";
 
+let id = 0;
+
 class Boid {
   constructor(options) {
     const defaultState = {

@@ -243,6 +243,15 @@ class BoidWorld {
     } 
     
   }
+
+  get toJson() {
+    return JSON.stringify(this._boids.map(boid => ({ x: boid.x, y: boid.y })));
+  }
+
+  //TODO
+  mergeStates(data) {
+    // accumulate returned velocities from worker ticks
+  }
 };
 
 export default BoidWorld;
