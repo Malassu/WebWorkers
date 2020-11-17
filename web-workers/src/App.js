@@ -19,13 +19,14 @@ class App {
       boidRadius: 10,
       explosionIntesity: 100,
       explosionRadius: 100,
-      maxSpeed: 1
+      maxSpeed: 5
     });
     this._renderer = new PixiRenderer(this._simulation);
   }
 
   restart() {
-    this.loop();
+    window.requestAnimationFrame(this.loop.bind(this));
+    // this.loop();
   }
 
   addBoids(amount) {
@@ -40,10 +41,14 @@ class App {
   }
 
   loop() {
-    setInterval(() => {
-      this._simulation.tick();
-      this._renderer.render();
-    }, 33);
+    window.requestAnimationFrame(this.loop.bind(this));
+    this._simulation.tick();
+    this._renderer.render();
+
+    // setInterval(() => {
+    //   this._simulation.tick();
+    //   this._renderer.render();
+    // }, 33);
   }
 }
   
