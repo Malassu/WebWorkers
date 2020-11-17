@@ -13,8 +13,13 @@ class SimpleWorkerPlanner {
   
   // initialize workers
   init() {
-    // TODO: set initial BoidWorld copy to each worker
-    // TODO: add onmessage handlers to catch messages that are passed back from the workers
+    // Pass initial state to workers
+    const data = this._simulation.serialize();
+    for (worker of this.workers) {
+      worker.postMessage({msg: 'init', data: data})
+      // add onmessage handlers to catch messages that are passed back from the workers
+      worker.onmessage = this.handleMessageFromWorker.bind(this);
+    }
   }
   
   
@@ -26,8 +31,9 @@ class SimpleWorkerPlanner {
   handleMessageFromWorker(e) {
     if(msg.data.msg == 'ticked') {
       boids = JSON.parse(msg.data.boids);
-      // TODO: synchronize state with other workers
-      // then start new tick if all workers have ticked (idleWorkerCount === workerCount)
+      // TODO: when all workers have completed local ticks
+      // merge local state to the main state this._simulation
+      // then ready to execute new tick
     }
   }
 }

@@ -11,27 +11,27 @@ class SimpleWorker {
     this._localSimulation = null;
   }
   
-  init() {
-    // TODO: set initial local copy of BoidWorld
+  init(data) {
+    this._localSimulation = BoidWorld.deserialize(data);
   }
   
-  localTick() {
-    // TODO: compute a local tick and send completion message to planner
-  }
-  
-  updateSimulation() {
-    // TODO: update the local copy state to the main simulation
+  localTick(data) {
+    // Overwrite local state by synchronized state from main thread
+    this._localSimulation.fromJson(data.state);
+    // Compute a local tick
+    this._localSimulation.tick();
+    // Post updated local state to main thread
+    const boids = this._localSimulation.toJson();
+    postMessage({msg: 'ticked', boids: boids})
   }
 }
 
 const worker = new SimpleWorker();
 
-onmessage = function(ev) {
-  if (ev.data.msg === 'start') {
-    worker.init();
-  } else if (ev.data.msg === 'tick') {
-    worker.localTick();
-  } else if (ev.data.msg === 'update') {
-    worker.updateSimulation();
+onmessage = function(e) {
+  if (e.data.msg === 'start') {
+    worker.init(e.data.data);
+  } else if (e.data.msg === 'tick') {
+    worker.localTick(e.data.data);
   }
 }
