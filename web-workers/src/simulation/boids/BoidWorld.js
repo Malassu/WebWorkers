@@ -244,8 +244,43 @@ class BoidWorld {
     
   }
 
-  get toJson() {
-    return JSON.stringify(this._boids.map(boid => ({ x: boid.x, y: boid.y })));
+  serializedWorldState() {
+    return {
+      bounded: this._state.bounded,
+      bounds: this._state.bounds,
+      boidRadius: this._state.boidRadius,
+      maxSpeed: this._state.maxSpeed,
+      numOfBoids: this._state.numOfBoids,
+      collision: this._state.collision,
+      explosion: this._state.explosion,
+      explosionsPerTick: this._state.explosionsPerTick,
+      explosionProb: this._state.explosionProb,
+      explosionRadius: this._state.explosionRadius,
+      explosionIntesity: this._state.explosionIntesity,
+      gridElementLimit: this._state.gridElementLimit
+    }
+  }
+
+  static cloneWorld(serializedWorldState) {
+    // TODO: currently spawns new boids to random locations instead of cloning boids
+    const cloneWorld = new BoidWorld(serialized);
+    return cloneWorld;
+  }
+
+  boidsFromJson(boidData) {
+    const boidsObj = JSON.parse(boidData);
+    res = [];
+    for (let boid in boidsObj) {
+      res.push(boid);
+    }
+    // overwrite
+    this.boids = res;
+  }
+
+  get boidsToJson() {
+    return JSON.stringify(this._boids.map(boid => {
+      (boid.serializedBoid())
+    }));
   }
 
   //TODO

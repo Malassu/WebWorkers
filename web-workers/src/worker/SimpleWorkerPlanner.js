@@ -14,9 +14,9 @@ class SimpleWorkerPlanner {
   // initialize workers
   init() {
     // Pass initial state to workers
-    const data = this._simulation.serialize();
+    const serialized = this._simulation.serializedWorldState();
     for (worker of this.workers) {
-      worker.postMessage({msg: 'init', data: data})
+      worker.postMessage({msg: 'init', data: serialized});
       // add onmessage handlers to catch messages that are passed back from the workers
       worker.onmessage = this.handleMessageFromWorker.bind(this);
     }
@@ -25,7 +25,10 @@ class SimpleWorkerPlanner {
   
   // TODO: simple parallel execution
   parallelTick() {
-    // TODO: check that all jobs have been completed
+    const boidsJson = this._simulation.boidsToJson;
+    for (worker of this.workers) {
+      worker.postMessage({msg: 'tick', boids: boidsJson});
+    }
   }
 
   handleMessageFromWorker(e) {

@@ -12,16 +12,16 @@ class SimpleWorker {
   }
   
   init(data) {
-    this._localSimulation = BoidWorld.deserialize(data);
+    this._localSimulation = BoidWorld.cloneWorld(data);
   }
   
-  localTick(data) {
-    // Overwrite local state by synchronized state from main thread
-    this._localSimulation.fromJson(data.state);
+  localTick(boidData) {
+    // Overwrite boid state with the synchronized state from main thread
+    this._localSimulation.boidsFromJson(boidData);
     // Compute a local tick
     this._localSimulation.tick();
     // Post updated local state to main thread
-    const boids = this._localSimulation.toJson();
+    const boids = this._localSimulation.boidsToJson;
     postMessage({msg: 'ticked', boids: boids})
   }
 }
@@ -32,6 +32,6 @@ onmessage = function(e) {
   if (e.data.msg === 'start') {
     worker.init(e.data.data);
   } else if (e.data.msg === 'tick') {
-    worker.localTick(e.data.data);
+    worker.localTick(e.data.boidData);
   }
 }

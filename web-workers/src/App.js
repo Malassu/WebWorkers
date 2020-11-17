@@ -19,7 +19,7 @@ class App {
       boidRadius: 10,
       explosionIntesity: 100,
       explosionRadius: 100,
-      maxSpeed: 5
+      maxSpeed: 2
     });
     this._renderer = new PixiRenderer(this._simulation);
   }

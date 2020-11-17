@@ -31,7 +31,7 @@ class Boid {
     this.x = Math.max(Math.min(this.x, bounds.x[1]), bounds.x[0]);
     this.y = Math.max(Math.min(this.y, bounds.y[1]), bounds.y[0]);
 
-    this.acceleration = this.velocity.scale(-0.02);
+    this.acceleration = this.velocity.scale(0.0);
 
     if (this._grid) {
       this._grid.removeElement(this);
@@ -72,6 +72,27 @@ class Boid {
 
   set grid(grid) {
     this._grid = grid;
+  }
+
+  serializedBoid() {
+    return {
+      position: {
+        x: this.position.x,
+        y: this.position.y
+      },
+      velocity: {
+        x: this.velocity.x,
+        y: this.velocity.y
+      },
+      acceleration: {
+        x: this.acceleration.x,
+        y: this.acceleration.y
+      },
+      radius: this.radius,
+      maxSpeed: this.maxSpeed,
+      collided: this.collided,
+      exploded: this.exploded
+    }
   }
 
 };
