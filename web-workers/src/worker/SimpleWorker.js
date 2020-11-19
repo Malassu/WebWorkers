@@ -6,32 +6,18 @@ import BoidWorld from '../simulation/boids/BoidWorld.js';
 * BoidWorld.
 */
 
-class SimpleWorker {
-  constructor() {
-    this._localSimulation = null;
-  }
-  
-  init(data) {
-    this._localSimulation = BoidWorld.cloneWorld(data);
-  }
-  
-  localTick(boidData) {
+self._localSimulation = null;
+
+self.onmessage = function(e) {
+  if (e.data.msg === 'init') {
+    this._localSimulation = BoidWorld.cloneWorld(e.data.serialized);
+  } else if (e.data.msg === 'tick') {
     // Overwrite boid state with the synchronized state from main thread
-    this._localSimulation.boidsFromJson(boidData);
+    self._localSimulation.boidsFromJson(e.data.boidsJson);
     // Compute a local tick
-    this._localSimulation.tick();
+    self._localSimulation.tick();
     // Post updated local state to main thread
     const boids = this._localSimulation.boidsToJson;
-    postMessage({msg: 'ticked', boids: boids})
-  }
-}
-
-const worker = new SimpleWorker();
-
-onmessage = function(e) {
-  if (e.data.msg === 'start') {
-    worker.init(e.data.data);
-  } else if (e.data.msg === 'tick') {
-    worker.localTick(e.data.boidData);
+    postMessage({msg: 'ticked', boids: boids});
   }
 }

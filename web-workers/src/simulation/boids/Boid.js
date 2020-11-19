@@ -1,7 +1,7 @@
 // TODO: Add checks for input values.
 import { Vector2D } from "../../utils/vectors.js";
 
-let id = 0;
+let idCounter = 0;
 
 class Boid {
   constructor(options) {
@@ -12,7 +12,8 @@ class Boid {
       radius: 0.01,
       maxSpeed: 0.01,
       collided: false,
-      exploded: false
+      exploded: false,
+      id: ++idCounter
     };
 
     this._grid = null;
@@ -74,7 +75,7 @@ class Boid {
     this._grid = grid;
   }
 
-  serializedBoid() {
+  get serializedBoid() {
     return {
       position: {
         x: this.position.x,
@@ -91,7 +92,8 @@ class Boid {
       radius: this.radius,
       maxSpeed: this.maxSpeed,
       collided: this.collided,
-      exploded: this.exploded
+      exploded: this.exploded,
+      id: this.id
     }
   }
 

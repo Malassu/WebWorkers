@@ -1,17 +1,15 @@
+import SimpleWorkerPlanner from "./worker/SimpleWorkerPlanner";
 import BoidWorld from "./simulation/boids/BoidWorld.js";
 import PixiRenderer from "./renderer/PixiRenderer.js"
 
 class App {
   constructor() {
 
-    this.image = "images/blue_ball_small.png";
-    this.balls = [];
-
     // BoidWorld setup
     const width = 768;
     const height = 768;
-    this._simulation = new BoidWorld({ 
-      numOfBoids: 1, 
+    this.simulation = new BoidWorld({ 
+      numOfBoids: 100, 
       bounds: {
         x: [0, width],
         y: [0, height]
@@ -21,34 +19,43 @@ class App {
       explosionRadius: 100,
       maxSpeed: 2
     });
-    this._renderer = new PixiRenderer(this._simulation);
+
+    this.readyToTick = true;
+
+    this._renderer = new PixiRenderer(this.simulation);
+    this._planner = new SimpleWorkerPlanner(this.simulation, 1, this.nextTickCallback.bind(this));
+    this._planner.init();
   }
 
   restart() {
+    // this._planner.init();
     window.requestAnimationFrame(this.loop.bind(this));
-    // this.loop();
   }
 
   addBoids(amount) {
     Array.from({length: amount}, () => {
-      this._simulation.addBoid();
+      this.simulation.addBoid();
       this._renderer.addSprite();
     });
   }
 
   setWorldState(option, value) {
-    this._simulation.setState(option, value);
+    this.simulation.setState(option, value);
   }
 
   loop() {
     window.requestAnimationFrame(this.loop.bind(this));
-    this._simulation.tick();
+    
+    // tick simulation only if all previous ticks have been merged
+    if (this.readyToTick) {
+      this._planner.parallelTick();
+      this.readyToTick = false;
+    }
     this._renderer.render();
+  }
 
-    // setInterval(() => {
-    //   this._simulation.tick();
-    //   this._renderer.render();
-    // }, 33);
+  nextTickCallback() {
+    this.readyToTick = true;
   }
 }
   

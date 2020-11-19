@@ -129,6 +129,10 @@ class BoidWorld {
     return this._boids;
   }
 
+  set boids(value) {
+    this.boids = value;
+  }
+
   get grid() {
     return this._grid;
   }
@@ -261,31 +265,40 @@ class BoidWorld {
     }
   }
 
-  static cloneWorld(serializedWorldState) {
-    // TODO: currently spawns new boids to random locations instead of cloning boids
+  // create a clone of BoidWorld based on serialized WorldState data
+  static cloneWorld(serialized) {
+    // TODO: currently spawns new boids to random locations in the clone instead of also cloning boids
     const cloneWorld = new BoidWorld(serialized);
     return cloneWorld;
   }
 
   boidsFromJson(boidData) {
-    const boidsObj = JSON.parse(boidData);
-    res = [];
-    for (let boid in boidsObj) {
-      res.push(boid);
-    }
-    // overwrite
-    this.boids = res;
+    // overwrite boids by boidData
+    this.boids = JSON.parse(boidData);
   }
 
   get boidsToJson() {
     return JSON.stringify(this._boids.map(boid => {
-      (boid.serializedBoid())
+      return boid.serializedBoid;
     }));
   }
 
-  //TODO
-  mergeStates(data) {
-    // accumulate returned velocities from worker ticks
+  // merge boid acceleration
+  mergeBoids(boidData) {
+    const boidsObj = JSON.parse(boidData);
+    const updatedBoids = [];
+    for (let boid in boidsObj) {
+      updatedBoids.push(boid);
+    }
+
+    for (let i=0; i < res.length; i++) {
+      const boid = this.boids[i];
+      const updatedBoid = updatedBoids[i]
+      if (boid.id == updatedBoid.id) {
+        boid.acceleration.x = updatedBoid.acceleration.x
+        boid.acceleration.y = updatedBoid.acceleration.y
+      }
+    }
   }
 };
 

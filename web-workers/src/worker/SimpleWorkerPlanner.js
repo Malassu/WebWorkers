@@ -1,42 +1,56 @@
 
 class SimpleWorkerPlanner {
-  constructor(simulation, workerCount = 1) {
-    this._simulation = simulation;
+  constructor(simulation, workerCount = 1, nextTickCallback) {
+    this.simulation = simulation;
     this.workerCount = workerCount;
     this.workers = [];
-    this.idleWorkerCount = workerCount;
+    this.tickedWorkerCount = 0;
     
-    for (let i; i < this.workerCount; i++) {
-      this.workers.push(new Worker('worker/SimpleWorker.js', {type: 'module'}));
+    // callback to request next tick from the application
+    this.nextTickCallback = nextTickCallback;
+    
+    for (let i=0; i < this.workerCount; i++) {
+      // module workers, see https://web.dev/module-workers/
+      this.workers.push(new Worker("src/worker/SimpleWorker.js", {type:"module"}));
     }
+
+    // add onmessage handlers to catch messages that are passed back from the workers
+    this.workers.forEach((worker) => {
+      worker.addEventListener('message', this.handleMessageFromWorker)
+    })
   }
   
   // initialize workers
   init() {
     // Pass initial state to workers
-    const serialized = this._simulation.serializedWorldState();
-    for (worker of this.workers) {
-      worker.postMessage({msg: 'init', data: serialized});
-      // add onmessage handlers to catch messages that are passed back from the workers
-      worker.onmessage = this.handleMessageFromWorker.bind(this);
-    }
+    const serialized = this.simulation.serializedWorldState();
+    this.workers.forEach((worker) => {
+      worker.postMessage({msg: 'init', serialized});
+    })
   }
   
-  
-  // TODO: simple parallel execution
   parallelTick() {
-    const boidsJson = this._simulation.boidsToJson;
-    for (worker of this.workers) {
-      worker.postMessage({msg: 'tick', boids: boidsJson});
-    }
+    console.log("tick")
+    const boidsJson = this.simulation.boidsToJson;
+    console.log(boidsJson);
+    this.workers.forEach((worker) => {
+      worker.postMessage({msg: 'tick', boidsJson});
+    })
   }
 
   handleMessageFromWorker(e) {
-    if(msg.data.msg == 'ticked') {
-      boids = JSON.parse(msg.data.boids);
-      // TODO: when all workers have completed local ticks
-      // merge local state to the main state this._simulation
-      // then ready to execute new tick
+    if (e.data.msg == 'ticked') {
+      this.tickedWorkerCount++;
+
+      this.simulation.mergeBoids(e.data.boids);
+
+      // merge worker states to main simulation when all workers have ticked
+      if (this.tickedWorkerCount === this.workerCount) {
+        // request next tick
+        this.nextTickCallback();
+      }
     }
   }
-}
+};
+
+export default SimpleWorkerPlanner;
