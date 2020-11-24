@@ -27,22 +27,24 @@ class BoidWorld {
     this._collision = this._collision.bind(this);
     this._explosion = this._explosion.bind(this);
 
-    this._boids = Array.from({ length: this._state.getState("numOfBoids") }, this._generateBoid);
+    this._boids = Array.from({ length: this._state.getState("numOfBoids") }, () => this._generateBoid());
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
 
   };
 
   // Creates a new boids with random coordinates within bounds.
-  _generateBoid(addToGrid = false) {
+  _generateBoid(addToGrid = false, pos, vel) {
     const { x, y } = this._state.getState("bounds");
-    const position = getRandom2D(x,y);
     const maxSpeed = this.getState("maxSpeed");
 
+    const position = typeof pos === "undefined" ? getRandom2D(x,y) : pos;
+    const velocity = typeof vel === "undefined" ? getRandom2D([-maxSpeed, maxSpeed]) : vel;
+
     const boid = new Boid({ 
-      position, 
+      position,
+      velocity,
       radius: this._state.getState("boidRadius"),
-      maxSpeed: this._state.getState("maxSpeed"),
-      velocity: getRandom2D([-maxSpeed, maxSpeed])
+      maxSpeed: this._state.getState("maxSpeed")
     });
 
     if (addToGrid) {
@@ -130,7 +132,7 @@ class BoidWorld {
   }
 
   set boids(value) {
-    this.boids = value;
+    this._boids = value;
   }
 
   get grid() {
@@ -273,8 +275,8 @@ class BoidWorld {
   }
 
   boidsFromJson(boidData) {
-    // overwrite boids by boidData
-    this.boids = JSON.parse(boidData);
+    const newBoids = Array.from(JSON.parse(boidData), ({ position, velocity }) => this._generateBoid(true, position, velocity))
+    this.boids = newBoids;
   }
 
   get boidsToJson() {

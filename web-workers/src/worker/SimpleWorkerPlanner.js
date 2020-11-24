@@ -32,7 +32,7 @@ class SimpleWorkerPlanner {
   parallelTick() {
     console.log("tick")
     const boidsJson = this.simulation.boidsToJson;
-    console.log(boidsJson);
+    //console.log(boidsJson);
     this.workers.forEach((worker) => {
       worker.postMessage({msg: 'tick', boidsJson});
     })
