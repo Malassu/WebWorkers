@@ -37,8 +37,8 @@ class BoidWorld {
     const { x, y } = this._state.getState("bounds");
     const maxSpeed = this.getState("maxSpeed");
 
-    const position = typeof pos === "undefined" ? getRandom2D(x,y) : pos;
-    const velocity = typeof vel === "undefined" ? getRandom2D([-maxSpeed, maxSpeed]) : vel;
+    const position = typeof pos === "undefined" ? getRandom2D(x,y) : new Vector2D(pos.x, pos.y);
+    const velocity = typeof vel === "undefined" ? getRandom2D([-maxSpeed, maxSpeed]) : new Vector2D(vel.x, vel.y);
 
     const boid = new Boid({ 
       position,
@@ -275,8 +275,11 @@ class BoidWorld {
   }
 
   boidsFromJson(boidData) {
-    const newBoids = Array.from(JSON.parse(boidData), ({ position, velocity }) => this._generateBoid(true, position, velocity))
-    this.boids = newBoids;
+    const newBoids = Array.from(JSON.parse(boidData), ({ position, velocity }) => this._generateBoid(false, position, velocity))
+    
+    // replace boids and create new grid
+    this._boids = newBoids;
+    this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
   }
 
   get boidsToJson() {
