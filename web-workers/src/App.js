@@ -43,15 +43,14 @@ class App {
     this.simulation.setState(option, value);
   }
 
-  loop() {
-    window.requestAnimationFrame(this.loop.bind(this));
-    
+  loop() {    
     // tick simulation only if all previous ticks have been merged
     if (this.readyToTick) {
       this._planner.parallelTick();
       this.readyToTick = false;
     }
     this._renderer.render();
+    window.requestAnimationFrame(this.loop.bind(this));
   }
 
   nextTickCallback() {

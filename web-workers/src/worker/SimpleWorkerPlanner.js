@@ -16,7 +16,7 @@ class SimpleWorkerPlanner {
 
     // add onmessage handlers to catch messages that are passed back from the workers
     this.workers.forEach((worker) => {
-      worker.addEventListener('message', this.handleMessageFromWorker)
+      worker.addEventListener('message', this.handleMessageFromWorker.bind(this));
     })
   }
   
@@ -30,7 +30,6 @@ class SimpleWorkerPlanner {
   }
   
   parallelTick() {
-    console.log("tick")
     const boidsJson = this.simulation.boidsToJson;
     //console.log(boidsJson);
     this.workers.forEach((worker) => {
@@ -41,13 +40,12 @@ class SimpleWorkerPlanner {
   handleMessageFromWorker(e) {
     if (e.data.msg == 'ticked') {
       this.tickedWorkerCount++;
-
       this.simulation.mergeBoids(e.data.boids);
-
       // merge worker states to main simulation when all workers have ticked
       if (this.tickedWorkerCount === this.workerCount) {
-        // request next tick
+        // reset ticked count and request next tick
         this.nextTickCallback();
+        this.tickedWorkerCount = 0;
       }
     }
   }

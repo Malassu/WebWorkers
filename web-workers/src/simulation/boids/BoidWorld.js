@@ -275,7 +275,7 @@ class BoidWorld {
   }
 
   boidsFromJson(boidData) {
-    const newBoids = Array.from(JSON.parse(boidData), ({ position, velocity }) => this._generateBoid(false, position, velocity))
+    const newBoids = Array.from(JSON.parse(boidData), ({ position, velocity }) => this._generateBoid(false, position, velocity));
     
     // replace boids and create new grid
     this._boids = newBoids;
@@ -290,19 +290,16 @@ class BoidWorld {
 
   // merge boid acceleration
   mergeBoids(boidData) {
-    const boidsObj = JSON.parse(boidData);
-    const updatedBoids = [];
-    for (let boid in boidsObj) {
-      updatedBoids.push(boid);
-    }
+    const updatedBoids = JSON.parse(boidData);
 
-    for (let i=0; i < res.length; i++) {
-      const boid = this.boids[i];
-      const updatedBoid = updatedBoids[i]
-      if (boid.id == updatedBoid.id) {
-        boid.acceleration.x = updatedBoid.acceleration.x
-        boid.acceleration.y = updatedBoid.acceleration.y
-      }
+    for (let i=0; i < updatedBoids.length; i++) {
+      const updatedBoid = updatedBoids[i];
+      const boid = this._boids[i];
+      boid.mergeState(updatedBoid);
+      // if (boid.id == updatedBoid.id) {
+      //   boid.acceleration.x = updatedBoid.acceleration.x
+      //   boid.acceleration.y = updatedBoid.acceleration.y
+      // }
     }
   }
 };

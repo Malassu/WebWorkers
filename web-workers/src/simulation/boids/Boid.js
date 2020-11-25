@@ -45,6 +45,21 @@ class Boid {
     return this.x >= bounds.x[0] && this.x <= bounds.x[1] && this.y >= bounds.y[0] && this.y <= bounds.y[1];
   }
 
+  mergeState(state) {
+    this.position.x = state.position.x;
+    this.position.y = state.position.y;
+
+    this.velocity.x = state.velocity.x;
+    this.velocity.y = state.velocity.y;
+
+    this.acceleration.x = state.acceleration.x;
+    this.acceleration.y = state.acceleration.y;
+
+    // only overwrite if true
+    this.collided = state.collided;
+    this.exploded = state.exploded;
+  }
+
   get x() {
     return this.position.x;
   }
