@@ -33,7 +33,7 @@ class BoidWorld {
   };
 
   // Creates a new boids with random coordinates within bounds.
-  _generateBoid(addToGrid = false, pos, vel) {
+  _generateBoid(addToGrid = false, pos, vel, id) {
     const { x, y } = this._state.getState("bounds");
     const maxSpeed = this.getState("maxSpeed");
 
@@ -44,7 +44,8 @@ class BoidWorld {
       position,
       velocity,
       radius: this._state.getState("boidRadius"),
-      maxSpeed: this._state.getState("maxSpeed")
+      maxSpeed: this._state.getState("maxSpeed"),
+      id
     });
 
     if (addToGrid) {
@@ -275,7 +276,7 @@ class BoidWorld {
   }
 
   boidsFromJson(boidData) {
-    const newBoids = Array.from(JSON.parse(boidData), ({ position, velocity }) => this._generateBoid(false, position, velocity));
+    const newBoids = Array.from(JSON.parse(boidData), ({ position, velocity, id }) => this._generateBoid(false, position, velocity, id));
     
     // replace boids and create new grid
     this._boids = newBoids;
@@ -295,11 +296,9 @@ class BoidWorld {
     for (let i=0; i < updatedBoids.length; i++) {
       const updatedBoid = updatedBoids[i];
       const boid = this._boids[i];
-      boid.mergeState(updatedBoid);
-      // if (boid.id == updatedBoid.id) {
-      //   boid.acceleration.x = updatedBoid.acceleration.x
-      //   boid.acceleration.y = updatedBoid.acceleration.y
-      // }
+      if (boid.id == updatedBoid.id) {
+        boid.mergeState(updatedBoid);
+      }
     }
   }
 };
