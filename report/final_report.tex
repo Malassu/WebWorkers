@@ -97,12 +97,28 @@ Verdú et al. \cite{verdu} examine how utilizing web workers scales the performa
 \section{Implementation}
 \label{sec:implementation}
 
-Here we present our implementation.
+This section covers the different architectures of the physics simulation application implemented in this paper. The main idea of the simulation is to generate a given amount
+of spherical objects and simulate their interactions via a graphical interface. These objects have attributes such as position, radius, velocity and acceleration. The 
+physics of the application includes simulating explosions and collisions between the objects.
 
-\subsection{Context} 
-\label{sec:context}
+\subsection{Default simulation} 
+\label{sec:default}
 
-Maybe a subsection if needed.
+The first implementation of the physics simulation only utilized the main thread in computation. This default architecture of the application implemented classes for the
+spherical objects, their interactions and the physics stage. A class utilizing the PIXI JavaScript library was implemented for managing the game loop, rendering and
+physics simulation objects.
+
+\subsection{Spatial partitioning} 
+\label{sec:spatial}
+
+The first architectural decision only optimized the simulation by partitioning the physics space and it did not yet include web workers.
+
+\subsection{One worker solution} 
+\label{sec:1workers}
+
+After the spatial partitioning solution, an implementation with a single web worker communicating with the main thread was made. This version initialized the objects used
+in physics simulation only in the worker thread. The worker thread executed the simulation and communicated the state information to the main thread via the messaging 
+interface. The only responsibility of the main thread was then to read the received information and render the graphics accordingly.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 \section{Evaluation}
