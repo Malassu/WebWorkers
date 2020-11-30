@@ -40,7 +40,7 @@ class SimpleWorkerPlanner {
     const chunkSize = Math.round(numOfBoids/this.workerCount);
     this.workers.forEach((worker, i) => {
       const start = i*chunkSize;
-      const end = (i === this.workerCount-1) ? numOfBoids : (i+1) * chunkSize - 1;
+      const end = (i === this.workerCount-1) ? numOfBoids : start + chunkSize;
       worker.postMessage({msg: 'tick', start, end, boidsJson});
     })
   }
