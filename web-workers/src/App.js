@@ -9,7 +9,7 @@ class App {
     const width = 1800;
     const height = 900;
     this.simulation = new BoidWorld({ 
-      numOfBoids: 100, 
+      numOfBoids: 4000, 
       bounds: {
         x: [0, width],
         y: [0, height]

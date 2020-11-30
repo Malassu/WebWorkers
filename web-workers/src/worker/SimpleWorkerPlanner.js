@@ -35,23 +35,7 @@ class SimpleWorkerPlanner {
 
     if (crossOriginIsolated) {
       console.log("Shared data is supported.");
-
-      // Creating a shared buffer
-      const length = 4;
-      // Get the size we want in bytes for the buffer
-      const size = Int32Array.BYTES_PER_ELEMENT * length;
-      // Create a buffer for 10 integers
-      const sharedBuffer = new SharedArrayBuffer(size);
-      const sharedIntArray = new Uint32Array(sharedBuffer, 0, 2);
-      const sharedFloatArray = new Float32Array(sharedBuffer, 4, 2);
-
-      sharedIntArray[0] = true;
-      sharedIntArray[1] = 0;
-
-      sharedFloatArray[0] = 0.1;
-      sharedFloatArray[1] = 0.2;
-
-      message.sharedBuffer = sharedBuffer;
+      message.sharedBuffer = this.simulation.getBinaryBuffer();
     }
     else {
       console.log("Shared data is not supported.");
@@ -62,17 +46,16 @@ class SimpleWorkerPlanner {
   } 
   
   parallelTick() {
-    const boidsJson = this.simulation.boidsToJson;
-    //console.log(boidsJson);
+    //const boidsJson = this.simulation.boidsToJson;
     this.workers.forEach((worker) => {
-      worker.postMessage({msg: 'tick', boidsJson});
+      worker.postMessage({msg: 'tick'});
     })
   }
 
   handleMessageFromWorker(e) {
     if (e.data.msg == 'ticked') {
       this.tickedWorkerCount++;
-      this.simulation.mergeBoids(e.data.boids);
+      this.simulation.boidsFromBinary();
       // merge worker states to main simulation when all workers have ticked
       if (this.tickedWorkerCount === this.workerCount) {
         // reset ticked count and request next tick

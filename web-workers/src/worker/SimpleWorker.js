@@ -10,20 +10,15 @@ self._localSimulation = null;
 
 self.onmessage = function(e) {
   if (e.data.msg === 'init') {
-    console.log(e.data.sharedBuffer.byteLength);
-    const sharedIntArray = new Uint32Array(e.data.sharedBuffer, 0, 2);
-    const sharedFloatArray = new Float32Array(e.data.sharedBuffer, 4, 2);
+    this._localSimulation = BoidWorld.cloneWorld(e.data.serialized, e.data.sharedBuffer);
 
-    console.log(`${ sharedIntArray[0] == 1 }: ${ sharedFloatArray[0] } and ${ sharedIntArray[1] == 1 }: ${ sharedFloatArray[1] }`);
-
-    this._localSimulation = BoidWorld.cloneWorld(e.data.serialized);
   } else if (e.data.msg === 'tick') {
     // Overwrite boid state with the synchronized state from main thread
-    self._localSimulation.boidsFromJson(e.data.boidsJson);
+    self._localSimulation.boidsFromBinary();
     // Compute a local tick
     self._localSimulation.tick();
+    self._localSimulation.boidsToBinary();
     // Post updated local state to main thread
-    const boids = this._localSimulation.boidsToJson;
-    postMessage({msg: 'ticked', boids: boids});
+    postMessage({msg: 'ticked'});
   }
 }

@@ -20,7 +20,7 @@ function getRandom(arr, n) {
 }
 
 class BoidWorld {
-  constructor(state) {
+  constructor(state, sharedBuffer) {
     this._state = new WorldState(state);
     
     this._generateBoid = this._generateBoid.bind(this);
@@ -29,9 +29,19 @@ class BoidWorld {
     this._explosion = this._explosion.bind(this);
 
     // TODO: Make use of binary parser optional
-    this._binaryParser = new BinaryBoidParser(this._state.getState("numOfBoids"));
+    this._binaryParser = new BinaryBoidParser(this._state.getState("numOfBoids"), sharedBuffer);
 
-    this._boids = Array.from({ length: this._state.getState("numOfBoids") }, () => this._generateBoid());
+    // Either use data from received buffer or create new boids
+    if (sharedBuffer) {
+      this._boids = this._binaryParser.getBoids().map(({ pos, vel, id }) => this._generateBoid(false, pos, vel, id));
+      console.log(this._boids[0].x, this._boids[0].y);
+    } 
+    else {
+      this._boids = Array.from({ length: this._state.getState("numOfBoids") }, () => this._generateBoid());
+      this._binaryParser.update(this._boids);
+      console.log(this._binaryParser.getBoids()[0].pos.x, this._binaryParser.getBoids()[0].pos.y);
+    }
+
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
 
   };
@@ -273,9 +283,9 @@ class BoidWorld {
   }
 
   // create a clone of BoidWorld based on serialized WorldState data
-  static cloneWorld(serialized) {
+  static cloneWorld(serialized, sharedBuffer) {
     // TODO: currently spawns new boids to random locations in the clone instead of also cloning boids
-    const cloneWorld = new BoidWorld(serialized);
+    const cloneWorld = new BoidWorld(serialized, sharedBuffer);
     return cloneWorld;
   }
 
@@ -287,12 +297,20 @@ class BoidWorld {
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
   }
 
+  getBinaryBuffer() {
+    return this._binaryParser.buffer;
+  }
+
   boidsFromBinary() {
-    const newBoids = Array.from(JSON.parse(boidData), ({ position, velocity, id }) => this._generateBoid(false, position, velocity, id));
-    
+    const newBoids = Array.from(this._binaryParser.getBoids(), ({ pos, vel, id }) => this._generateBoid(false, pos, vel, id));
+
     // replace boids and create new grid
     this._boids = newBoids;
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
+  }
+
+  boidsToBinary() {
+    this._binaryParser.update(this._boids);
   }
 
   get boidsToJson() {
