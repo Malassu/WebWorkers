@@ -1,3 +1,5 @@
+import * as PIXI from "pixi.js-legacy";
+
 class PixiRenderer {
   constructor(simulation) {
 
@@ -9,12 +11,15 @@ class PixiRenderer {
 
     // PIXI setup
     let type = "WebGL";
-    // let type = "canvas";
-    // if(!PIXI.utils.isWebGLSupported()){
-    //   type = "canvas"
-    // }
-    PIXI.utils.sayHello(type)
-    this.app = new PIXI.Application({width: this.width, height: this.height, forceCanvas: true});
+
+    if(!PIXI.utils.isWebGLSupported()){
+      console.log("No support");
+      type = "canvas";
+    }
+
+    PIXI.utils.sayHello(type);
+
+    this.app = new PIXI.Application({width: this.width, height: this.height, forceCanvas: true, type});
     this.app.renderer.backgroundColor = 0xFFFFFF;
     this.app.view.style.border = "solid";
     document.body.appendChild(this.app.view);
@@ -29,9 +34,10 @@ class PixiRenderer {
     const explosionRadius = this._simulation.getState('explosionRadius')
     this.explosionTexture = this.getExplosionTexture(explosionRadius);
     
+    console.log(PIXI.loader)
 
     // load
-    PIXI.loader
+    this.app.loader
       .add(this.image)
       .load(this.init.bind(this));
   }

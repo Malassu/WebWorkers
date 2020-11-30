@@ -13,5 +13,13 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "./src/index.html")
     })
-  ]
+  ],
+  module: {
+    rules: [
+      {
+        test: /\Worker\.js$/,
+        use: { loader: 'worker-loader' },
+      },
+    ],
+  },
 }
