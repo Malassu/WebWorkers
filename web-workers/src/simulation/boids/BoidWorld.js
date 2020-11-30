@@ -1,6 +1,7 @@
 import WorldState from "./WorldState.js";
 import Boid from "./Boid.js";
 import Grid from "../grid/Grid.js";
+import BinaryBoidParser from "./BinaryBoidParser.js";
 import { getRandom2D, Vector2D } from "../../utils/vectors.js";
 
 // https://stackoverflow.com/questions/19269545/how-to-get-a-number-of-random-elements-from-an-array
@@ -26,6 +27,9 @@ class BoidWorld {
     this._bounded = this._bounded.bind(this);
     this._collision = this._collision.bind(this);
     this._explosion = this._explosion.bind(this);
+
+    // TODO: Make use of binary parser optional
+    this._binaryParser = new BinaryBoidParser(this._state.getState("numOfBoids"));
 
     this._boids = Array.from({ length: this._state.getState("numOfBoids") }, () => this._generateBoid());
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
@@ -276,6 +280,14 @@ class BoidWorld {
   }
 
   boidsFromJson(boidData) {
+    const newBoids = Array.from(JSON.parse(boidData), ({ position, velocity, id }) => this._generateBoid(false, position, velocity, id));
+    
+    // replace boids and create new grid
+    this._boids = newBoids;
+    this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
+  }
+
+  boidsFromBinary() {
     const newBoids = Array.from(JSON.parse(boidData), ({ position, velocity, id }) => this._generateBoid(false, position, velocity, id));
     
     // replace boids and create new grid

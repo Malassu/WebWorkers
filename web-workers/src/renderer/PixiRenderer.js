@@ -33,8 +33,6 @@ class PixiRenderer {
     // Set explosion texture
     const explosionRadius = this._simulation.getState('explosionRadius')
     this.explosionTexture = this.getExplosionTexture(explosionRadius);
-    
-    console.log(PIXI.loader)
 
     // load
     this.app.loader

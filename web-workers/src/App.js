@@ -6,8 +6,8 @@ class App {
   constructor() {
 
     // BoidWorld setup
-    const width = 768;
-    const height = 768;
+    const width = 1800;
+    const height = 900;
     this.simulation = new BoidWorld({ 
       numOfBoids: 100, 
       bounds: {

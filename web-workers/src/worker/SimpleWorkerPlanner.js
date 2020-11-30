@@ -27,9 +27,39 @@ class SimpleWorkerPlanner {
     // Pass initial state to workers
     const serialized = this.simulation.serializedWorldState();
     this.workers.forEach((worker) => {
-      worker.postMessage({msg: 'init', serialized});
+    
+    const message = {
+      msg: 'init',
+      serialized 
+    };
+
+    if (crossOriginIsolated) {
+      console.log("Shared data is supported.");
+
+      // Creating a shared buffer
+      const length = 4;
+      // Get the size we want in bytes for the buffer
+      const size = Int32Array.BYTES_PER_ELEMENT * length;
+      // Create a buffer for 10 integers
+      const sharedBuffer = new SharedArrayBuffer(size);
+      const sharedIntArray = new Uint32Array(sharedBuffer, 0, 2);
+      const sharedFloatArray = new Float32Array(sharedBuffer, 4, 2);
+
+      sharedIntArray[0] = true;
+      sharedIntArray[1] = 0;
+
+      sharedFloatArray[0] = 0.1;
+      sharedFloatArray[1] = 0.2;
+
+      message.sharedBuffer = sharedBuffer;
+    }
+    else {
+      console.log("Shared data is not supported.");
+    }
+
+      worker.postMessage(message);
     })
-  }
+  } 
   
   parallelTick() {
     const boidsJson = this.simulation.boidsToJson;
