@@ -34,11 +34,11 @@ class Boid {
 
     this.acceleration = this.velocity.scale(0.0);
 
-    if (this._grid) {
-      this._grid.removeElement(this);
-      this._grid = this._grid.findFittingGrid(this).findFittingLeaf(this);
-      this._grid.addElement(this);
-    }
+    // if (this._grid) {
+    //   this._grid.removeElement(this);
+    //   this._grid = this._grid.findFittingGrid(this).findFittingLeaf(this);
+    //   this._grid.addElement(this);
+    // }
   }
 
   inBounds(bounds) {
@@ -56,8 +56,8 @@ class Boid {
     this.acceleration.y = state.acceleration.y;
 
     // only overwrite if true
-    this.collided = state.collided;
-    this.exploded = state.exploded;
+    this.collided = this.collided ? this.collided : state.collided;
+    this.exploded = this.exploded ? this.exploded : state.exploded;
   }
 
   get x() {

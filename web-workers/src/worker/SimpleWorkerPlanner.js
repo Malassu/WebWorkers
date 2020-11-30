@@ -32,15 +32,21 @@ class SimpleWorkerPlanner {
   parallelTick() {
     const boidsJson = this.simulation.boidsToJson;
     //console.log(boidsJson);
-    this.workers.forEach((worker) => {
-      worker.postMessage({msg: 'tick', boidsJson});
+
+    // Split the workload among workers
+    const numOfBoids = this.simulation.getState("numOfBoids");
+    const chunkSize = Math.round(numOfBoids/this.workerCount);
+    this.workers.forEach((worker, i) => {
+      const start = i*chunkSize;
+      const end = (i === this.workerCount-1) ? numOfBoids : (i+1) * chunkSize - 1;
+      worker.postMessage({msg: 'tick', start, end, boidsJson});
     })
   }
 
   handleMessageFromWorker(e) {
     if (e.data.msg == 'ticked') {
       this.tickedWorkerCount++;
-      this.simulation.mergeBoids(e.data.boids);
+      this.simulation.mergeBoids(e.data.start, e.data.end, e.data.boids);
       // merge worker states to main simulation when all workers have ticked
       if (this.tickedWorkerCount === this.workerCount) {
         // reset ticked count and request next tick

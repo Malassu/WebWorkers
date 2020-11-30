@@ -29,7 +29,6 @@ class BoidWorld {
 
     this._boids = Array.from({ length: this._state.getState("numOfBoids") }, () => this._generateBoid());
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
-
   };
 
   // Creates a new boids with random coordinates within bounds.
@@ -57,20 +56,32 @@ class BoidWorld {
 
   // Runs next step of the simulation.
   // TODO: allow ticking partial boids in order to support concurrency
-  tick() {
+  tick(start=0, end=this._boids.length) {
+
     // clear behavior status
-    this.boids.forEach((boid) => {
+    this._boids.forEach((boid) => {
       boid.collided = false;
       boid.exploded = false;
     });
 
+    // Apply behavior forces
     ["bounded", "collision", "explosion"].map(rule => {
       if (this._state.getState(rule))
-        this[`_${ rule }`]();
+        this[`_${ rule }`](start, end);
     });
 
+    // Update positions
+    for (let i=start; i<end; i++) {
+      this._boids[i].tick(this._state.getState("bounds"));
+    }
 
-    this._boids.map(boid => boid.tick(this._state.getState("bounds")));
+    this.updateGrid();
+  }
+
+  updateGrid() {
+
+    // Find fitting leaf
+    this._boids.forEach(boid => this._grid.findFittingLeaf(boid))
 
     const elementLimit = this.getState("gridElementLimit");
 
@@ -104,7 +115,6 @@ class BoidWorld {
         break;
       }
     }
-
   }
 
   addBoid() {
@@ -144,7 +154,7 @@ class BoidWorld {
   // 1. Check if boid is near a boundary
   // 2. If not do nothing
   // 3. If it is then add calculate velocity along the corresponding axis and add -2 times that value to acceleration.
-  _bounded() {
+  _bounded(start, end) {
     const bounds = this._state.getState("bounds");
     
     // Direction indicates wheter the boid is near the minimum border or maximum border.
@@ -159,7 +169,8 @@ class BoidWorld {
       boid.acceleration = boid.acceleration.add(acceleration);
     };
 
-    for (const boid of this._boids) {
+    for (let i=start; i<end; i++) {
+      const boid = this.boids[i];
 
       for (const axis in bounds) {
         if (boid[axis] - boid.radius <= bounds[axis][0]) {
@@ -173,12 +184,11 @@ class BoidWorld {
   }
 
   // Calculate collision forces
-  _collision() {
-    const indices = [ ...this._boids.keys() ];
+  _collision(start, end) {
 
     // Loop over all boids.
-    for (const index1 of indices) {
-      const boid1 = this._boids[index1];
+    for (let i=start; i<end; i++) {
+      const boid1 = this.boids[i];
       // Loop over boids that index1 has not used.
       // This way we can updated both boidi and boidj in one iteration and only do one of the symmetrical cases (boidi -> boidj) and (boidj -> boidi)
       // where (boidi -> boidj) represents boid with index1 = i colliding with boid with index2 = j
@@ -290,10 +300,10 @@ class BoidWorld {
   }
 
   // merge boid acceleration
-  mergeBoids(boidData) {
+  mergeBoids(start, end, boidData) {
     const updatedBoids = JSON.parse(boidData);
 
-    for (let i=0; i < updatedBoids.length; i++) {
+    for (let i=start; i < end; i++) {
       const updatedBoid = updatedBoids[i];
       const boid = this._boids[i];
       if (boid.id == updatedBoid.id) {

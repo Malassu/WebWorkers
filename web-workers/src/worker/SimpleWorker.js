@@ -12,12 +12,14 @@ self.onmessage = function(e) {
   if (e.data.msg === 'init') {
     this._localSimulation = BoidWorld.cloneWorld(e.data.serialized);
   } else if (e.data.msg === 'tick') {
+    const start = e.data.start;
+    const end = e.data.end;
     // Overwrite boid state with the synchronized state from main thread
     self._localSimulation.boidsFromJson(e.data.boidsJson);
     // Compute a local tick
-    self._localSimulation.tick();
+    self._localSimulation.tick(start, end);
     // Post updated local state to main thread
     const boids = this._localSimulation.boidsToJson;
-    postMessage({msg: 'ticked', boids: boids});
+    postMessage({msg: 'ticked', start, end, boids: boids});
   }
 }
