@@ -13,19 +13,19 @@
          margin-left:auto;
          margin-right:0;
          padding: 10px;
-         background-color: rgba(0,0,0,0.8);
+         background-color: rgba(0,0,0,0.1);
          border: solid 1px;
-         width: 200px;
-         height: 300px;
          display:table;
        }
       ul {
         margin: 0;
         padding: 0;
+        list-style:none;
+        display: flex;
+        flex-direction: column;
       }
       li {
         display: table;
-        list-style:none;
         padding: 5px;
       }
       .input-wrap {
@@ -43,6 +43,14 @@
               <input type="number" id="amount" value="10">
             </div>
             <button id="addButton">Add</button>
+          </li>
+          <li>
+            <input type="checkbox" id="collisions" name="collisions" checked>
+            <label for="collisions">Collisions</label>
+          </li>
+          <li>
+            <p style="margin:0;">Explosion Frequency: <span id="explosionFreq">0.01</span></p>
+            <input type="range" id="explosions" min="0" max="100" value="1">
           </li>
           <li>
             <button id="resetButton">Reset</button>

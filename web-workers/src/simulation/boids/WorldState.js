@@ -11,7 +11,7 @@ class WorldState {
       maxSpeed: 1.0,          // Max speed all boids should follow.
       numOfBoids: 0,          // Current number of boids
       collision: true,        // Boids can bounce off of each other.
-      explosion: true,        // Boids can randomly "explode" pushing surrounding boids away. 
+      explosion: false,        // Boids can randomly "explode" pushing surrounding boids away. 
       explosionsPerTick: 1,   // Maximum number of explosions per tick NOTE: Should be at most numOfBoids
       explosionProb: 0.01,    // probability of explosion per tick,
       explosionRadius: 0.01,  // Radius of explosion

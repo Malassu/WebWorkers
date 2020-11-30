@@ -1,6 +1,8 @@
 // TODO: Add checks for input values.
 import { Vector2D } from "../../utils/vectors.js";
 
+let idCounter = 0;
+
 class Boid {
   constructor(options) {
     const defaultState = {
@@ -8,7 +10,10 @@ class Boid {
       velocity: new Vector2D(0, 0),
       acceleration: new Vector2D(0, 0),
       radius: 0.01,
-      maxSpeed: 0.01
+      maxSpeed: 0.01,
+      collided: false,
+      exploded: false,
+      id: ++idCounter
     };
 
     this._grid = null;
@@ -27,7 +32,7 @@ class Boid {
     this.x = Math.max(Math.min(this.x, bounds.x[1]), bounds.x[0]);
     this.y = Math.max(Math.min(this.y, bounds.y[1]), bounds.y[0]);
 
-    this.acceleration = this.velocity.scale(-0.02);
+    this.acceleration = this.velocity.scale(0.0);
 
     if (this._grid) {
       this._grid.removeElement(this);
@@ -38,6 +43,21 @@ class Boid {
 
   inBounds(bounds) {
     return this.x >= bounds.x[0] && this.x <= bounds.x[1] && this.y >= bounds.y[0] && this.y <= bounds.y[1];
+  }
+
+  mergeState(state) {
+    this.position.x = state.position.x;
+    this.position.y = state.position.y;
+
+    this.velocity.x = state.velocity.x;
+    this.velocity.y = state.velocity.y;
+
+    this.acceleration.x = state.acceleration.x;
+    this.acceleration.y = state.acceleration.y;
+
+    // only overwrite if true
+    this.collided = state.collided;
+    this.exploded = state.exploded;
   }
 
   get x() {
@@ -68,6 +88,28 @@ class Boid {
 
   set grid(grid) {
     this._grid = grid;
+  }
+
+  get serializedBoid() {
+    return {
+      position: {
+        x: this.position.x,
+        y: this.position.y
+      },
+      velocity: {
+        x: this.velocity.x,
+        y: this.velocity.y
+      },
+      acceleration: {
+        x: this.acceleration.x,
+        y: this.acceleration.y
+      },
+      radius: this.radius,
+      maxSpeed: this.maxSpeed,
+      collided: this.collided,
+      exploded: this.exploded,
+      id: this.id
+    }
   }
 
 };

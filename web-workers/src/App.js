@@ -1,90 +1,60 @@
+import SimpleWorkerPlanner from "./worker/SimpleWorkerPlanner";
 import BoidWorld from "./simulation/boids/BoidWorld.js";
+import PixiRenderer from "./renderer/PixiRenderer.js"
 
 class App {
   constructor() {
 
-    this.image = "images/blue_ball_small.png";
-    this.balls = [];
-
     // BoidWorld setup
     const width = 768;
     const height = 768;
-    this._simulation = new BoidWorld({ 
-      numOfBoids: 1, 
+    this.simulation = new BoidWorld({ 
+      numOfBoids: 100, 
       bounds: {
         x: [0, width],
         y: [0, height]
       },
       boidRadius: 10,
-      maxSpeed: 5
+      explosionIntesity: 100,
+      explosionRadius: 100,
+      maxSpeed: 2
     });
 
-    // PIXI setup
-    let type = "WebGL";
-    if(!PIXI.utils.isWebGLSupported()){
-      type = "canvas"
-    }
-    PIXI.utils.sayHello(type)
-    this.app = new PIXI.Application({width: width, height: height, forceCanvas: true});
-    this.app.renderer.backgroundColor = 0xFFFFFF;
-    this.app.view.style.border = "solid";
-    document.body.appendChild(this.app.view);
+    this.readyToTick = true;
 
-    // Set texture
-    const circle = new PIXI.Graphics();
-    circle.beginFill(0x000000);
-    circle.lineStyle(0);
-    circle.drawCircle(10, 10, 10);
-    circle.endFill();
-
-    const texture = PIXI.RenderTexture.create(circle.width, circle.height);
-    this.app.renderer.render(circle, texture);
-    this.texture = texture;
-
-
-    // load
-    PIXI.loader
-      .add(this.image)
-      .load(this.init.bind(this));
+    this._renderer = new PixiRenderer(this.simulation);
+    this._planner = new SimpleWorkerPlanner(this.simulation, 1, this.nextTickCallback.bind(this));
+    this._planner.init();
   }
 
-  init() {
-    this._simulation.boids.forEach(value => {
-      this.addSprite();
-    });
-
-    this.loop();
+  restart() {
+    // this._planner.init();
+    window.requestAnimationFrame(this.loop.bind(this));
   }
 
   addBoids(amount) {
     Array.from({length: amount}, () => {
-      this._simulation.addBoid();
-      this.addSprite();
+      this.simulation.addBoid();
+      this._renderer.addSprite();
     });
   }
 
-  addSprite() {
-    // let ball = new PIXI.Sprite(PIXI.loader.resources[this.image].texture);
-    let ball = new PIXI.Sprite(this.texture);
-    ball.anchor.set(0.5);
-    this.app.stage.addChild(ball);
-    this.balls.push(ball);
+  setWorldState(option, value) {
+    this.simulation.setState(option, value);
   }
 
-  render() {
-    this._simulation.boids.forEach((boid, i) => {
-      if (this.balls[i] !== undefined) {
-        let x = boid["position"]["components"]["x"];
-        let y = boid["position"]["components"]["y"];
-        this.balls[i].position.set(x, y);
-      }
-    });
+  loop() {    
+    // tick simulation only if all previous ticks have been merged
+    if (this.readyToTick) {
+      this._planner.parallelTick();
+      this.readyToTick = false;
+    }
+    this._renderer.render();
+    window.requestAnimationFrame(this.loop.bind(this));
   }
 
-  loop() {
-    this._simulation.tick();
-    this.render();
-    requestAnimationFrame(this.loop.bind(this));
+  nextTickCallback() {
+    this.readyToTick = true;
   }
 }
   

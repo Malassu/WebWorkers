@@ -27,27 +27,43 @@ class BoidWorld {
     this._collision = this._collision.bind(this);
     this._explosion = this._explosion.bind(this);
 
-    this._boids = Array.from({ length: this._state.getState("numOfBoids") }, this._generateBoid);
+    this._boids = Array.from({ length: this._state.getState("numOfBoids") }, () => this._generateBoid());
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
 
   };
 
   // Creates a new boids with random coordinates within bounds.
-  _generateBoid() {
+  _generateBoid(addToGrid = false, pos, vel, id) {
     const { x, y } = this._state.getState("bounds");
-    const position = getRandom2D(x,y);
     const maxSpeed = this.getState("maxSpeed");
 
-    return new Boid({ 
-      position, 
+    const position = typeof pos === "undefined" ? getRandom2D(x,y) : new Vector2D(pos.x, pos.y);
+    const velocity = typeof vel === "undefined" ? getRandom2D([-maxSpeed, maxSpeed]) : new Vector2D(vel.x, vel.y);
+
+    const boid = new Boid({ 
+      position,
+      velocity,
       radius: this._state.getState("boidRadius"),
       maxSpeed: this._state.getState("maxSpeed"),
-      velocity: getRandom2D([-maxSpeed, maxSpeed])
+      id
     });
+
+    if (addToGrid) {
+      boid.grid = this._grid.findFittingLeaf(boid);
+    }
+    
+    return boid 
   }
 
   // Runs next step of the simulation.
+  // TODO: allow ticking partial boids in order to support concurrency
   tick() {
+    // clear behavior status
+    this.boids.forEach((boid) => {
+      boid.collided = false;
+      boid.exploded = false;
+    });
+
     ["bounded", "collision", "explosion"].map(rule => {
       if (this._state.getState(rule))
         this[`_${ rule }`]();
@@ -92,7 +108,7 @@ class BoidWorld {
   }
 
   addBoid() {
-    this._boids.push(this._generateBoid());
+    this._boids.push(this._generateBoid(true));
     this.setState("numOfBoids", this._boids.length);
   }
 
@@ -114,6 +130,10 @@ class BoidWorld {
 
   get boids() {
     return this._boids;
+  }
+
+  set boids(value) {
+    this._boids = value;
   }
 
   get grid() {
@@ -188,6 +208,9 @@ class BoidWorld {
           boid1.acceleration = boid1.acceleration.add(f1.scale(2).subtract(f2));
           boid2.acceleration = boid2.acceleration.add(f2.scale(2).subtract(f1));
 
+          // 6. Set collision status
+          boid1.collided = true;
+          boid2.collided = true;
         }
       }
     }
@@ -206,6 +229,7 @@ class BoidWorld {
     // For each boid B:
     for (const explosionBoid of randomBoids) {
       if (Math.random() < explosionProb) {
+        explosionBoid.exploded = true;
         
         for (const victimBoid of this._boids) {
           // Notice that n can later be used as a normal vector for calculating the acceleration.
@@ -227,6 +251,56 @@ class BoidWorld {
     
   }
 
+  serializedWorldState() {
+    return {
+      bounded: this._state.bounded,
+      bounds: this._state.bounds,
+      boidRadius: this._state.boidRadius,
+      maxSpeed: this._state.maxSpeed,
+      numOfBoids: this._state.numOfBoids,
+      collision: this._state.collision,
+      explosion: this._state.explosion,
+      explosionsPerTick: this._state.explosionsPerTick,
+      explosionProb: this._state.explosionProb,
+      explosionRadius: this._state.explosionRadius,
+      explosionIntesity: this._state.explosionIntesity,
+      gridElementLimit: this._state.gridElementLimit
+    }
+  }
+
+  // create a clone of BoidWorld based on serialized WorldState data
+  static cloneWorld(serialized) {
+    // TODO: currently spawns new boids to random locations in the clone instead of also cloning boids
+    const cloneWorld = new BoidWorld(serialized);
+    return cloneWorld;
+  }
+
+  boidsFromJson(boidData) {
+    const newBoids = Array.from(JSON.parse(boidData), ({ position, velocity, id }) => this._generateBoid(false, position, velocity, id));
+    
+    // replace boids and create new grid
+    this._boids = newBoids;
+    this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
+  }
+
+  get boidsToJson() {
+    return JSON.stringify(this._boids.map(boid => {
+      return boid.serializedBoid;
+    }));
+  }
+
+  // merge boid acceleration
+  mergeBoids(boidData) {
+    const updatedBoids = JSON.parse(boidData);
+
+    for (let i=0; i < updatedBoids.length; i++) {
+      const updatedBoid = updatedBoids[i];
+      const boid = this._boids[i];
+      if (boid.id == updatedBoid.id) {
+        boid.mergeState(updatedBoid);
+      }
+    }
+  }
 };
 
 export default BoidWorld;
