@@ -23,6 +23,10 @@ module.exports = {
     ],
   },
   devServer: {
-    https: true
+    https: true,
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp"
+    }
   }
 }
