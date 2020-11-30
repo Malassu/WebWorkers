@@ -1,4 +1,4 @@
-import SimpleWorkerPlanner from "./worker/SimpleWorkerPlanner";
+import SimpleWorkerPlanner from "./worker/SimpleWorkerPlanner.js";
 import BoidWorld from "./simulation/boids/BoidWorld.js";
 import PixiRenderer from "./renderer/PixiRenderer.js"
 
