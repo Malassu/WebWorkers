@@ -1,4 +1,6 @@
 
+import Worker from "worker-loader!./SimpleWorker.js";
+
 class SimpleWorkerPlanner {
   constructor(simulation, workerCount = 1, nextTickCallback) {
     this.simulation = simulation;
@@ -11,7 +13,7 @@ class SimpleWorkerPlanner {
     
     for (let i=0; i < this.workerCount; i++) {
       // module workers, see https://web.dev/module-workers/
-      this.workers.push(new Worker("src/worker/SimpleWorker.js", {type:"module"}));
+      this.workers.push(new Worker({ type:"module" }));
     }
 
     // add onmessage handlers to catch messages that are passed back from the workers
