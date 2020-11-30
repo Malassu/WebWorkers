@@ -2,7 +2,7 @@
 import Worker from "worker-loader!./SimpleWorker.js";
 
 class SimpleWorkerPlanner {
-  constructor(simulation, workerCount = 1, nextTickCallback) {
+  constructor(simulation, workerCount = 2, nextTickCallback) {
     this.simulation = simulation;
     this.workerCount = workerCount;
     this.workers = [];

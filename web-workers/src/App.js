@@ -23,7 +23,7 @@ class App {
     this.readyToTick = true;
 
     this._renderer = new PixiRenderer(this.simulation);
-    this._planner = new SimpleWorkerPlanner(this.simulation, 1, this.nextTickCallback.bind(this));
+    this._planner = new SimpleWorkerPlanner(this.simulation, 2, this.nextTickCallback.bind(this));
     this._planner.init();
   }
 
