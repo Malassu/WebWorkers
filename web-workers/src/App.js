@@ -1,6 +1,7 @@
 import SimpleWorkerPlanner from "./worker/SimpleWorkerPlanner.js";
 import BoidWorld from "./simulation/boids/BoidWorld.js";
 import PixiRenderer from "./renderer/PixiRenderer.js"
+import CanvasRenderer from "./renderer/CanvasRenderer.js";
 
 class App {
   constructor() {
@@ -9,7 +10,7 @@ class App {
     const width = 768;
     const height = 768;
     this.simulation = new BoidWorld({ 
-      numOfBoids: 100, 
+      numOfBoids: 4000, 
       bounds: {
         x: [0, width],
         y: [0, height]
@@ -22,8 +23,9 @@ class App {
 
     this.readyToTick = true;
 
-    this._renderer = new PixiRenderer(this.simulation);
-    this._planner = new SimpleWorkerPlanner(this.simulation, 2, this.nextTickCallback.bind(this));
+    // this._renderer = new PixiRenderer(this.simulation);
+    this._renderer = new CanvasRenderer(this.simulation);
+    this._planner = new SimpleWorkerPlanner(this.simulation, 1, this.nextTickCallback.bind(this));
     this._planner.init();
   }
 
@@ -49,6 +51,7 @@ class App {
       this._planner.parallelTick();
       this.readyToTick = false;
     }
+    // this.simulation.tick();
     this._renderer.render();
     window.requestAnimationFrame(this.loop.bind(this));
   }
