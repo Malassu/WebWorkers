@@ -47,15 +47,21 @@ class BinaryBoidParser {
 
   getBoids() {
     return Array.from({ length: this._pXArray.length }, (v, index) => ({
-     pos: {
+     position: {
        x: this._pXArray[index],
        y: this._pYArray[index],
      },
-     vel: {
+     velocity: {
       x: this._vXArray[index],
       y: this._vYArray[index],
-    },
-    id: this._idArray[index]
+      },
+      acceleration: {
+        x: this._aXArray[index],
+        y: this._aYArray[index],
+      },
+      id: this._idArray[index],
+      collided: Atomics.load(this._colArray, index) == 1,
+      exploded: Atomics.load(this._expArray, index) == 1
     }));
     
   }

@@ -33,13 +33,11 @@ class BoidWorld {
 
     // Either use data from received buffer or create new boids
     if (sharedBuffer) {
-      this._boids = this._binaryParser.getBoids().map(({ pos, vel, id }) => this._generateBoid(false, pos, vel, id));
-      console.log(this._boids[0].x, this._boids[0].y);
+      this._boids = this._binaryParser.getBoids().map(({ position, velocity, id }) => this._generateBoid(false, position, velocity, id));
     } 
     else {
       this._boids = Array.from({ length: this._state.getState("numOfBoids") }, () => this._generateBoid());
       this._binaryParser.update(this._boids);
-      console.log(this._binaryParser.getBoids()[0].pos.x, this._binaryParser.getBoids()[0].pos.y);
     }
 
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
@@ -86,38 +84,7 @@ class BoidWorld {
 
     this._boids.map(boid => boid.tick(this._state.getState("bounds")));
 
-    const elementLimit = this.getState("gridElementLimit");
-
-    // Separate leaf nodes to the ones that require subdivison and the ones that don't.
-    let leafNodes = this._grid.leafNodes.reduce((acc, curr) => {
-      if (curr.checkSubdivide(elementLimit)) {
-        acc.subdivide.push(curr);
-      }
-      else {
-        acc.others.push(curr);
-      }
-
-      return acc;
-    }, {
-      subdivide: [],
-      others: [] 
-    });
-
-    leafNodes.subdivide.map(grid => grid.subdivide(elementLimit));
-
-    // Now consider grids that might need to be unsubdivided
-    leafNodes = leafNodes.others;
-
-    while (true) {
-      leafNodes = leafNodes.map(node => node.parent).filter(parent => parent.checkUnsubdivide(elementLimit));
-
-      if (leafNodes.length) {
-        leafNodes.map(node => node.unsubdivide());
-      }
-      else {
-        break;
-      }
-    }
+    this.gridUpdate();
 
   }
 
@@ -299,11 +266,46 @@ class BoidWorld {
     return this._binaryParser.buffer;
   }
 
-  boidsFromBinary() {
-    const newBoids = Array.from(this._binaryParser.getBoids(), ({ pos, vel, id }) => this._generateBoid(false, pos, vel, id));
+  gridUpdate() {
+    const elementLimit = this.getState("gridElementLimit");
 
-    // replace boids and create new grid
-    this._boids = newBoids;
+    // Separate leaf nodes to the ones that require subdivison and the ones that don't.
+    let leafNodes = this._grid.leafNodes.reduce((acc, curr) => {
+      if (curr.checkSubdivide(elementLimit)) {
+        acc.subdivide.push(curr);
+      }
+      else {
+        acc.others.push(curr);
+      }
+
+      return acc;
+    }, {
+      subdivide: [],
+      others: [] 
+    });
+
+    leafNodes.subdivide.map(grid => grid.subdivide(elementLimit));
+
+    // Now consider grids that might need to be unsubdivided
+    leafNodes = leafNodes.others;
+
+    while (true) {
+      leafNodes = leafNodes.map(node => node.parent).filter(parent => parent.checkUnsubdivide(elementLimit));
+
+      if (leafNodes.length) {
+        leafNodes.map(node => node.unsubdivide());
+      }
+      else {
+        break;
+      }
+    }
+  }
+
+  boidsFromBinary() {
+    this._binaryParser.getBoids().map((state, index) => {
+      this._boids[index].mergeState(state);
+    });
+
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
   }
 
