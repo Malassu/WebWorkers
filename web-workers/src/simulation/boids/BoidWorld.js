@@ -220,11 +220,9 @@ class BoidWorld {
 
           // 5. Calculate a1 = 2*f1 - f2 and a2 = 2*f2 + f1.
           boid1.acceleration = boid1.acceleration.add(f1.scale(2).subtract(f2));
-          boid2.acceleration = boid2.acceleration.add(f2.scale(2).subtract(f1));
 
           // 6. Set collision status
           boid1.collided = true;
-          boid2.collided = true;
         }
       }
     }
