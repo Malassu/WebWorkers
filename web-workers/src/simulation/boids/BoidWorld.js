@@ -254,12 +254,16 @@ class BoidWorld {
     return cloneWorld;
   }
 
-  boidsFromJson(boidData) {
-    const newBoids = Array.from(JSON.parse(boidData), ({ position, velocity, id }) => this._generateBoid(false, position, velocity, id));
+  boidsFromSerialized(boidData) {
+    const newBoids = Array.from(boidData, ({ position, velocity, id }) => this._generateBoid(false, position, velocity, id));
     
     // replace boids and create new grid
     this._boids = newBoids;
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
+  }
+
+  boidsFromJson(jsonStr) {
+    this.boidsFromSerialized(JSON.parse(jsonStr));
   }
 
   getBinaryBuffer() {
@@ -314,15 +318,18 @@ class BoidWorld {
   }
 
   get boidsToJson() {
-    return JSON.stringify(this._boids.map(boid => {
+    return JSON.stringify(this.serializedBoids);
+  }
+
+  get serializedBoids() {
+    return this._boids.map(boid => {
       return boid.serializedBoid;
-    }));
+    });
   }
 
   // merge boid acceleration
-  mergeBoids(boidData) {
-    const updatedBoids = JSON.parse(boidData);
-
+  mergeBoids(updatedBoids) {
+    
     for (let i=0; i < updatedBoids.length; i++) {
       const updatedBoid = updatedBoids[i];
       const boid = this._boids[i];
@@ -330,6 +337,10 @@ class BoidWorld {
         boid.mergeState(updatedBoid);
       }
     }
+  }
+
+  mergeBoidsJson(boidData) {
+    mergeBoids(JSON.parse(boidData));
   }
 };
 

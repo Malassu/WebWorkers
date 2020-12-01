@@ -45,6 +45,7 @@ class SimpleWorkerPlanner {
     })
   } 
   
+  /*
   parallelTick() {
     //const boidsJson = this.simulation.boidsToJson;
     this.workers.forEach((worker) => {
@@ -55,7 +56,29 @@ class SimpleWorkerPlanner {
   handleMessageFromWorker(e) {
     if (e.data.msg == 'ticked') {
       this.tickedWorkerCount++;
-      this.simulation.boidsFromBinary();
+      //this.simulation.boidsFromBinary();
+      // merge worker states to main simulation when all workers have ticked
+      if (this.tickedWorkerCount === this.workerCount) {
+        // reset ticked count and request next tick
+        this.nextTickCallback();
+        this.tickedWorkerCount = 0;
+      }
+    }
+  }
+  */
+
+  parallelTick() {
+    const boidsJson = this.simulation.serializedBoids;
+    
+    this.workers.forEach((worker) => {
+      worker.postMessage({msg: 'tick', boidsJson});
+    })
+  }
+
+  handleMessageFromWorker(e) {
+    if (e.data.msg == 'ticked') {
+      this.tickedWorkerCount++;
+      this.simulation.mergeBoids(e.data.boids);
       // merge worker states to main simulation when all workers have ticked
       if (this.tickedWorkerCount === this.workerCount) {
         // reset ticked count and request next tick

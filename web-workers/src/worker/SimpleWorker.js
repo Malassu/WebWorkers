@@ -14,11 +14,20 @@ self.onmessage = function(e) {
 
   } else if (e.data.msg === 'tick') {
     // Overwrite boid state with the synchronized state from main thread
-    self._localSimulation.boidsFromBinary();
+    self._localSimulation.boidsFromSerialized(e.data.boidsJson);
     // Compute a local tick
     self._localSimulation.tick();
-    self._localSimulation.boidsToBinary();
     // Post updated local state to main thread
-    postMessage({msg: 'ticked'});
+    const boids = this._localSimulation.serializedBoids;
+    postMessage({msg: 'ticked', boids: boids});
   }
 }
+/*
+// Overwrite boid state with the synchronized state from main thread
+self._localSimulation.boidsFromBinary();
+// Compute a local tick
+self._localSimulation.tick();
+self._localSimulation.boidsToBinary();
+// Post updated local state to main thread
+postMessage({msg: 'ticked'});
+*/
