@@ -30,6 +30,12 @@
       .input-wrap {
         display:table-cell;
       }
+      .timestamp-container {
+        background-color: rgba(0,0,0,0.7);
+        padding: 0.5rem;
+        width: 20rem;
+        color: red;
+      }
 
     </style>
     <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -56,6 +62,24 @@
           </li> -->
           <li>
             <button id="startButton">Start</button>
+          </li>
+          <li>
+            <div class="timestamp-container">
+              <div class="timestamp">
+                <label>
+                  Entire parallel tick:
+                </label>
+                <span id="parallelTick">0</span>FPS
+              </div>
+              <div class="timestamp">
+                <label>Average worker response:</label>
+                <span id="avgEntireWorker">0</span>ms
+              </div>
+              <div class="timestamp">
+                <label>Average worker tick:</label>
+                <span id="avgTick">0</span>ms
+              </div>
+            </div>
           </li>
         </ul>
       </div>

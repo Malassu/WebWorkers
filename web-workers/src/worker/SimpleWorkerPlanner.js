@@ -17,7 +17,8 @@ class SimpleWorkerPlanner {
   create(workerCount, config) {
     this.simulation = new BoidWorld(config);
 
-    this.timeStamp = null;
+    this.tickStart = null;
+    this.workerTimeStamps = [];
 
     this.workerCount = workerCount;
 
@@ -44,7 +45,8 @@ class SimpleWorkerPlanner {
   }
 
   parallelTick() {
-    this.timeStamp = [];
+    this.tickStart = performance.now();
+    this.workerTimeStamps = [];
 
     // const boidsJson = this.simulation.boidsToJson;
     //console.log(boidsJson);
@@ -62,7 +64,8 @@ class SimpleWorkerPlanner {
   handleMessageFromWorker(index, e) {
     if (e.data.msg == 'planner-merge') {
       this.tickedWorkerCount++;
-      console.log(e.data.timeStamp, "ms");
+      
+      this.workerTimeStamps = this.workerTimeStamps.concat((({ tickTime, allTime }) => ({ tickTime, allTime }))(e.data));
 
       this.simulation.mergeBoids(e.data.boids);
       // Merge sub workers
@@ -83,7 +86,10 @@ class SimpleWorkerPlanner {
 
         // Reset ticked count and request next tick
         this.tickedWorkerCount = 0;
-        postMessage({msg: 'main-render', boids: this.simulation.boidsToJson()});
+        postMessage({msg: 'main-render', boids: this.simulation.boidsToJson(), timeStamps: {
+          parallelTick: performance.now() - this.tickStart,
+          workers: this.workerTimeStamps
+        }});
         this.parallelTick();
       }
     }

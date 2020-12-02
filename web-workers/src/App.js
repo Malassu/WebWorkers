@@ -26,6 +26,26 @@ class App {
     this._renderer = new CanvasRenderer(this.width, this.height);
     this._planner = new Worker({type:'module'});
     this._planner.addEventListener('message', this.handleMessageFromPlanner.bind(this));
+    this._eventListeners = {};
+  }
+
+  on(eventName, cb) {
+    if (!this._eventListeners[eventName])
+      this._eventListeners[eventName] = [];
+
+    this._eventListeners[eventName] = this._eventListeners[eventName].concat(cb);
+  }
+
+  removeListener(eventName, cb) {
+    if (!this._eventListeners[eventName])
+      throw Error(`Can't remove event listener. Now listeners for event ${ eventName } exist.`);
+
+    this._eventListeners[eventName] = this._eventListeners[eventName].filter(listener => listener !== cb);
+  }
+
+  emit(eventName, data) {
+    if (this._eventListeners[eventName])
+      this._eventListeners[eventName].forEach(cb => cb(data));
   }
 
   reset() {
@@ -52,6 +72,9 @@ class App {
       const boids = JSON.parse(e.data.boids);
       
       this._renderer.render(boids);
+
+      
+      this.emit("simulation-timestamps", e.data.timeStamps);
     }
   }
 }
