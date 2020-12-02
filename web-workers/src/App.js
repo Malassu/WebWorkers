@@ -1,37 +1,29 @@
-import SimpleWorkerPlanner from "./worker/SimpleWorkerPlanner.js";
-import BoidWorld from "./simulation/boids/BoidWorld.js";
 import PixiRenderer from "./renderer/PixiRenderer.js"
 import CanvasRenderer from "./renderer/CanvasRenderer.js";
+import Worker from "worker-loader!./worker/SimpleWorkerPlanner.js";
 
 class App {
   constructor() {
 
     // BoidWorld setup
-    const width = 768;
-    const height = 768;
-    this.simulation = new BoidWorld({ 
-      numOfBoids: 1000, 
-      bounds: {
-        x: [0, width],
-        y: [0, height]
-      },
-      boidRadius: 10,
-      explosionIntesity: 100,
-      explosionRadius: 100,
-      maxSpeed: 2
-    });
+    this.width = 768;
+    this.height = 768;
+    this.workerCount = 1;
 
-    this.readyToTick = true;
+    // this.readyToTick = true;
 
-    // this._renderer = new PixiRenderer(this.simulation);
-    this._renderer = new CanvasRenderer(this.simulation);
-    this._planner = new SimpleWorkerPlanner(this.simulation, 1, this.nextTickCallback.bind(this));
-    this._planner.init();
+    // this._renderer = new PixiRenderer(width, height);
+    this._renderer = new CanvasRenderer(this.width, this.height);
+    this._planner = new Worker({type:'module'});
+    this._planner.addEventListener('message', this.handleMessageFromPlanner.bind(this));
   }
 
-  restart() {
-    // this._planner.init();
-    window.requestAnimationFrame(this.loop.bind(this));
+  reset() {
+    this._planner.postMessage({msg: 'create-planner', workerCount: this.workerCount, width: this.width, height: this.height});
+  }
+
+  start() {
+    this._planner.postMessage({msg: 'start-planner'});
   }
 
   addBoids(amount) {
@@ -45,19 +37,12 @@ class App {
     this.simulation.setState(option, value);
   }
 
-  loop() {    
-    // tick simulation only if all previous ticks have been merged
-    if (this.readyToTick) {
-      this._planner.parallelTick();
-      this.readyToTick = false;
+  handleMessageFromPlanner(e) {
+    if (e.data.msg == 'render') {
+      const boids = JSON.parse(e.data.boids);
+      console.log(boids);
+      this._renderer.render(boids);
     }
-    // this.simulation.tick();
-    this._renderer.render();
-    window.requestAnimationFrame(this.loop.bind(this));
-  }
-
-  nextTickCallback() {
-    this.readyToTick = true;
   }
 }
   

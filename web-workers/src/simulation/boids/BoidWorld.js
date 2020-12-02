@@ -308,20 +308,13 @@ class BoidWorld {
   }
 
   // merge boid acceleration
-  mergeBoids(start, end, boidData) {
+  mergeBoids(boidData) {
     const updatedBoids = JSON.parse(boidData);
 
     for (const updatedBoid of updatedBoids) {
       const boid = this._boids[updatedBoid.id];
       this._boids[updatedBoid.id].mergeState(updatedBoid);
     }
-    // for (let i=start; i < end; i++) {
-    //   const updatedBoid = updatedBoids[i];
-    //   const boid = this._boids[i];
-    //   if (boid.id == updatedBoid.id) {
-    //     boid.mergeState(updatedBoid);
-    //   }
-    // }
   }
 };
 
