@@ -6,9 +6,9 @@ class App {
   constructor() {
 
     // BoidWorld setup
-    this.width = 768;
-    this.height = 768;
-    this.workerCount = 1;
+    this.width = 1800;
+    this.height = 900;
+    this.workerCount = 4;
 
     // this.readyToTick = true;
 
@@ -40,7 +40,7 @@ class App {
   handleMessageFromPlanner(e) {
     if (e.data.msg == 'render') {
       const boids = JSON.parse(e.data.boids);
-      console.log(boids);
+      
       this._renderer.render(boids);
     }
   }

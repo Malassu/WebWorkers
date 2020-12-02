@@ -16,7 +16,7 @@ class SimpleWorkerPlanner {
   // Create BoidWorld within planner context and initialize workers
   create(workerCount, width, height) {
     this.simulation = new BoidWorld({
-      numOfBoids: 1000, 
+      numOfBoids: 4000, 
       bounds: {
         x: [0, width],
         y: [0, height]
@@ -26,6 +26,8 @@ class SimpleWorkerPlanner {
       explosionRadius: 100,
       maxSpeed: 2
     });
+
+    this.timeStamp = null;
 
     this.workerCount = workerCount;
 
@@ -48,6 +50,8 @@ class SimpleWorkerPlanner {
   }
 
   parallelTick() {
+    this.timeStamp = [];
+
     const boidsJson = this.simulation.boidsToJson;
     //console.log(boidsJson);
 
@@ -64,12 +68,14 @@ class SimpleWorkerPlanner {
   handleMessageFromWorker(e) {
     if (e.data.msg == 'ticked') {
       this.tickedWorkerCount++;
+      console.log(e.data.timeStamp, "ms");
       this.simulation.mergeBoids(e.data.boids);
       // merge worker states to main simulation when all workers have ticked
       if (this.tickedWorkerCount === this.workerCount) {
         // reset ticked count and request next tick
         this.simulation.move();
         this.tickedWorkerCount = 0;
+        console.log("-----------------------------------------"); 
         postMessage({msg: 'render', boids: this.simulation.boidsToJson});
         this.parallelTick();
       }
