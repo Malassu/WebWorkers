@@ -36,6 +36,7 @@ class BoidWorld {
     const { x, y } = this._state.getState("bounds");
     const maxSpeed = this.getState("maxSpeed");
 
+    // Generate random vectors if not given
     const position = typeof pos === "undefined" ? getRandom2D(x,y) : new Vector2D(pos.x, pos.y);
     const velocity = typeof vel === "undefined" ? getRandom2D([-maxSpeed, maxSpeed]) : new Vector2D(vel.x, vel.y);
 
@@ -54,8 +55,7 @@ class BoidWorld {
     return boid 
   }
 
-  // Runs next step of the simulation.
-  // TODO: allow ticking partial boids in order to support concurrency
+  // Runs next step of the simulation by calculating forces affecting a partition of boids
   tick(start=0, end=this._boids.length) {
 
     // clear behavior status
@@ -70,11 +70,18 @@ class BoidWorld {
         this[`_${ rule }`](start, end);
     });
 
-    // Update positions
-    for (let i=start; i<end; i++) {
+    // for (let i=0; i<this._boids.length; i++) {
+    //   this._boids[i].tick(this._state.getState("bounds"));
+    // }
+    // this.updateGrid();
+  }
+
+  // Calculate new boid positions based on simulated forces
+  move() {
+    // Update boid positions
+    for (let i=0; i<this._boids.length; i++) {
       this._boids[i].tick(this._state.getState("bounds"));
     }
-
     this.updateGrid();
   }
 
@@ -229,15 +236,16 @@ class BoidWorld {
   }
 
   // Calculate explosion forces.
-  _explosion() {
+  _explosion(start, end) {
     // Choose state.explosionsPerTick number of boids.
-    const randomBoids = getRandom(this._boids, this._state.getState("explosionsPerTick"));
+    const randomBoidIndices = getRandom(this._boids.slice(start, end).map(boid => boid.id), this._state.getState("explosionsPerTick"));
     const explosionRadius = this.getState("explosionRadius");
     const explosionIntensity = this.getState("explosionIntesity");
     const explosionProb = this.getState("explosionProb");
 
     // For each boid B:
-    for (const explosionBoid of randomBoids) {
+    for (const explosionIndex of randomBoidIndices) {
+      const explosionBoid = this._boids[explosionIndex];
       if (Math.random() < explosionProb) {
         explosionBoid.exploded = true;
         
@@ -257,7 +265,7 @@ class BoidWorld {
           }
         }
       }
-    } 
+    }
     
   }
 
@@ -303,13 +311,17 @@ class BoidWorld {
   mergeBoids(start, end, boidData) {
     const updatedBoids = JSON.parse(boidData);
 
-    for (let i=start; i < end; i++) {
-      const updatedBoid = updatedBoids[i];
-      const boid = this._boids[i];
-      if (boid.id == updatedBoid.id) {
-        boid.mergeState(updatedBoid);
-      }
+    for (const updatedBoid of updatedBoids) {
+      const boid = this._boids[updatedBoid.id];
+      this._boids[updatedBoid.id].mergeState(updatedBoid);
     }
+    // for (let i=start; i < end; i++) {
+    //   const updatedBoid = updatedBoids[i];
+    //   const boid = this._boids[i];
+    //   if (boid.id == updatedBoid.id) {
+    //     boid.mergeState(updatedBoid);
+    //   }
+    // }
   }
 };
 

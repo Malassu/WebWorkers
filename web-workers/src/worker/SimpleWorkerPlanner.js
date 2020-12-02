@@ -52,11 +52,14 @@ class SimpleWorkerPlanner {
       // merge worker states to main simulation when all workers have ticked
       if (this.tickedWorkerCount === this.workerCount) {
         // reset ticked count and request next tick
+        // this.simulation.move();
         this.nextTickCallback();
         this.tickedWorkerCount = 0;
       }
     }
   }
 };
+
+
 
 export default SimpleWorkerPlanner;
