@@ -34,11 +34,11 @@ class Boid {
 
     this.acceleration = this.velocity.scale(0.0);
 
-    // if (this._grid) {
-    //   this._grid.removeElement(this);
-    //   this._grid = this._grid.findFittingGrid(this).findFittingLeaf(this);
-    //   this._grid.addElement(this);
-    // }
+    if (this._grid) {
+      this._grid.removeElement(this);
+      this._grid = this._grid.findFittingGrid(this).findFittingLeaf(this);
+      this._grid.addElement(this);
+    }
   }
 
   inBounds(bounds) {
@@ -46,7 +46,15 @@ class Boid {
   }
 
   mergeState(state) {
-    this.acceleration = this.acceleration.add(new Vector2D(state.acceleration.x, state.acceleration.y))
+    this.position.x = state.position.x;
+    this.position.y = state.position.y;
+
+    this.velocity.x = state.velocity.x;
+    this.velocity.y = state.velocity.y;
+
+    this.acceleration.x = state.acceleration.x;
+    this.acceleration.y = state.acceleration.y;
+    // this.acceleration = this.acceleration.add(new Vector2D(state.acceleration.x, state.acceleration.y))
 
     // only overwrite if true
     this.collided = this.collided ? this.collided : state.collided;

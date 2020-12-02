@@ -70,20 +70,20 @@ class BoidWorld {
         this[`_${ rule }`](start, end);
     });
 
-    // for (let i=0; i<this._boids.length; i++) {
-    //   this._boids[i].tick(this._state.getState("bounds"));
-    // }
+    for (let i=0; i<this._boids.length; i++) {
+      this._boids[i].tick(this._state.getState("bounds"));
+    }
     // this.updateGrid();
   }
 
   // Calculate new boid positions based on simulated forces
-  move() {
-    // Update boid positions
-    for (let i=0; i<this._boids.length; i++) {
-      this._boids[i].tick(this._state.getState("bounds"));
-    }
-    this.updateGrid();
-  }
+  // move() {
+  //   // Update boid positions
+  //   for (let i=0; i<this._boids.length; i++) {
+  //     this._boids[i].tick(this._state.getState("bounds"));
+  //   }
+  //   this.updateGrid();
+  // }
 
   updateGrid() {
 
@@ -301,8 +301,8 @@ class BoidWorld {
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
   }
 
-  get boidsToJson() {
-    return JSON.stringify(this._boids.map(boid => {
+  boidsToJson(start=0, end=this._boids.length) {
+    return JSON.stringify(this._boids.slice(start, end).map(boid => {
       return boid.serializedBoid;
     }));
   }

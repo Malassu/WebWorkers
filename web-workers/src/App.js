@@ -8,7 +8,7 @@ class App {
     // BoidWorld setup
     this.width = 1800;
     this.height = 900;
-    this.workerCount = 4;
+    this.workerCount = 2;
 
     this.config = {
       numOfBoids: 1000,

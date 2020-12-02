@@ -10,20 +10,24 @@ self._localSimulation = null;
 
 self.onmessage = function(e) {
   if (e.data.msg === 'worker-init') {
-    this._localSimulation = BoidWorld.cloneWorld(e.data.serialized);
+    self._localSimulation = BoidWorld.cloneWorld(e.data.serialized);
+    // Overwrite boid state with the synchronized state from main thread
+    self._localSimulation.boidsFromJson(e.data.boids);
+    console.log(self._localSimulation);
   } else if (e.data.msg === 'worker-tick') {
     const start = e.data.start;
     const end = e.data.end;
-    // Overwrite boid state with the synchronized state from main thread
-    self._localSimulation.boidsFromJson(e.data.boidsJson);
     // Compute a local tick
     const startTime = performance.now();
     self._localSimulation.tick(start, end);
     const timeStamp = performance.now() - startTime;
     // Post updated local state to main thread
-    const boids = this._localSimulation.boidsToJson;
-    postMessage({msg: 'planner-merge', start, end, boids: boids, timeStamp});
+    const mutatedBoids = self._localSimulation.boidsToJson(start, end);
+    // self._localSimulation.move();
+    postMessage({msg: 'planner-merge', boids: mutatedBoids, timeStamp});
   } else if (e.data.msg === 'worker-merge') {
-    this._localSimulation.mergeBoids(e.data.boids);
+    self._localSimulation.mergeBoids(e.data.boids);
+  } else if (e.data.msg === 'worker-move') {
+    self._localSimulation.move();
   }
 }

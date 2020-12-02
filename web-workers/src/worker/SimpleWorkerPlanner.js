@@ -29,20 +29,24 @@ class SimpleWorkerPlanner {
 
     // add onmessage handlers to catch messages that are passed back from the workers
     this.workers.forEach((worker, index) => {
-      worker.addEventListener('message', this.handleMessageFromWorker.bind(this));
+      worker.addEventListener('message', this.handleMessageFromWorker.bind(this, index));
     })
 
     // Pass initial state to workers
     const serialized = this.simulation.serializedWorldState();
+    const boidsJson = this.simulation.boidsToJson();
+
+    console.log(this.simulation);
+
     this.workers.forEach((worker) => {
-      worker.postMessage({msg: 'worker-init', serialized});
+      worker.postMessage({msg: 'worker-init', serialized, boids: boidsJson});
     })
   }
 
   parallelTick() {
     this.timeStamp = [];
 
-    const boidsJson = this.simulation.boidsToJson;
+    // const boidsJson = this.simulation.boidsToJson;
     //console.log(boidsJson);
 
     // Split the workload among workers
@@ -51,27 +55,35 @@ class SimpleWorkerPlanner {
     this.workers.forEach((worker, i) => {
       const start = i*chunkSize;
       const end = (i === this.workerCount-1) ? numOfBoids : start + chunkSize;
-      worker.postMessage({msg: 'worker-tick', start, end, boidsJson});
+      worker.postMessage({msg: 'worker-tick', start, end});
     })
   }
 
-  handleMessageFromWorker(e) {
+  handleMessageFromWorker(index, e) {
     if (e.data.msg == 'planner-merge') {
       this.tickedWorkerCount++;
       console.log(e.data.timeStamp, "ms");
+
       this.simulation.mergeBoids(e.data.boids);
       // Merge sub workers
-      // this.workers.forEach((worker, workerIndex) => {
-      //   if (index != workerIndex) {
-      //     worker.postMessage({msg: 'worker-merge', boids: e.data.boids});
-      //   }
-      // })
+      this.workers.forEach((worker, workerIndex) => {
+        if (index != workerIndex) {
+          worker.postMessage({msg: 'worker-merge', boids: e.data.boids});
+        }
+      })
       // merge worker states to main simulation when all workers have ticked
       if (this.tickedWorkerCount === this.workerCount) {
-        // reset ticked count and request next tick
-        this.simulation.move();
+        // Move main and worker simulations
+        // this.workers.forEach((worker, workerIndex) => {
+        //   if (index != workerIndex) {
+        //     worker.postMessage({msg: 'worker-move'});
+        //   }
+        // })
+        // this.simulation.move();
+
+        // Reset ticked count and request next tick
         this.tickedWorkerCount = 0;
-        postMessage({msg: 'main-render', boids: this.simulation.boidsToJson});
+        postMessage({msg: 'main-render', boids: this.simulation.boidsToJson()});
         this.parallelTick();
       }
     }
