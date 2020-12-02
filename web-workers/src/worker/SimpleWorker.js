@@ -12,17 +12,18 @@ self.onmessage = function(e) {
   if (e.data.msg === 'worker-init') {
     this._localSimulation = BoidWorld.cloneWorld(e.data.serialized);
   } else if (e.data.msg === 'worker-tick') {
+    const startTimeAll = performance.now();
     const start = e.data.start;
     const end = e.data.end;
     // Overwrite boid state with the synchronized state from main thread
     self._localSimulation.boidsFromJson(e.data.boidsJson);
     // Compute a local tick
-    const startTime = performance.now();
+    const startTimeTick = performance.now();
     self._localSimulation.tick(start, end);
-    const timeStamp = performance.now() - startTime;
+    const tickTime = performance.now() - startTimeTick;
     // Post updated local state to main thread
     const boids = this._localSimulation.boidsToJson;
-    postMessage({msg: 'planner-merge', start, end, boids: boids, timeStamp});
+    postMessage({msg: 'planner-merge', start, end, boids: boids, tickTime, allTime: performance.now() - startTimeAll });
   } else if (e.data.msg === 'worker-merge') {
     this._localSimulation.mergeBoids(e.data.boids);
   }
