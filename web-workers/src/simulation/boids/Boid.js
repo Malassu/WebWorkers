@@ -46,15 +46,7 @@ class Boid {
   }
 
   mergeState(state) {
-    // this.position.x = state.position.x;
-    // this.position.y = state.position.y;
-
-    // this.velocity.x = state.velocity.x;
-    // this.velocity.y = state.velocity.y;
     this.acceleration = this.acceleration.add(new Vector2D(state.acceleration.x, state.acceleration.y))
-    // this.acceleration.x = state.acceleration.x;
-    // this.acceleration.y = state.acceleration.y;
-
 
     // only overwrite if true
     this.collided = this.collided ? this.collided : state.collided;

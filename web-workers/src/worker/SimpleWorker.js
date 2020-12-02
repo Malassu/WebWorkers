@@ -9,9 +9,9 @@ import BoidWorld from '../simulation/boids/BoidWorld.js';
 self._localSimulation = null;
 
 self.onmessage = function(e) {
-  if (e.data.msg === 'init') {
+  if (e.data.msg === 'worker-init') {
     this._localSimulation = BoidWorld.cloneWorld(e.data.serialized);
-  } else if (e.data.msg === 'tick') {
+  } else if (e.data.msg === 'worker-tick') {
     const start = e.data.start;
     const end = e.data.end;
     // Overwrite boid state with the synchronized state from main thread
@@ -20,6 +20,8 @@ self.onmessage = function(e) {
     self._localSimulation.tick(start, end);
     // Post updated local state to main thread
     const boids = this._localSimulation.boidsToJson;
-    postMessage({msg: 'ticked', start, end, boids: boids});
+    postMessage({msg: 'planner-merge', start, end, boids: boids});
+  } else if (e.data.msg === 'worker-merge') {
+    this._localSimulation.mergeBoids(e.data.boids);
   }
 }

@@ -14,18 +14,8 @@ class SimpleWorkerPlanner {
   }
   
   // Create BoidWorld within planner context and initialize workers
-  create(workerCount, width, height) {
-    this.simulation = new BoidWorld({
-      numOfBoids: 1000, 
-      bounds: {
-        x: [0, width],
-        y: [0, height]
-      },
-      boidRadius: 10,
-      explosionIntesity: 100,
-      explosionRadius: 100,
-      maxSpeed: 2
-    });
+  create(workerCount, config) {
+    this.simulation = new BoidWorld(config);
 
     this.workerCount = workerCount;
 
@@ -36,14 +26,14 @@ class SimpleWorkerPlanner {
     }
 
     // add onmessage handlers to catch messages that are passed back from the workers
-    this.workers.forEach((worker) => {
+    this.workers.forEach((worker, index) => {
       worker.addEventListener('message', this.handleMessageFromWorker.bind(this));
     })
 
     // Pass initial state to workers
     const serialized = this.simulation.serializedWorldState();
     this.workers.forEach((worker) => {
-      worker.postMessage({msg: 'init', serialized});
+      worker.postMessage({msg: 'worker-init', serialized});
     })
   }
 
@@ -57,29 +47,36 @@ class SimpleWorkerPlanner {
     this.workers.forEach((worker, i) => {
       const start = i*chunkSize;
       const end = (i === this.workerCount-1) ? numOfBoids : start + chunkSize;
-      worker.postMessage({msg: 'tick', start, end, boidsJson});
+      worker.postMessage({msg: 'worker-tick', start, end, boidsJson});
     })
   }
 
   handleMessageFromWorker(e) {
-    if (e.data.msg == 'ticked') {
+    if (e.data.msg == 'planner-merge') {
       this.tickedWorkerCount++;
+      // Merge main simulation
       this.simulation.mergeBoids(e.data.boids);
+      // Merge sub workers
+      // this.workers.forEach((worker, workerIndex) => {
+      //   if (index != workerIndex) {
+      //     worker.postMessage({msg: 'worker-merge', boids: e.data.boids});
+      //   }
+      // })
       // merge worker states to main simulation when all workers have ticked
       if (this.tickedWorkerCount === this.workerCount) {
         // reset ticked count and request next tick
         this.simulation.move();
         this.tickedWorkerCount = 0;
-        postMessage({msg: 'render', boids: this.simulation.boidsToJson});
+        postMessage({msg: 'main-render', boids: this.simulation.boidsToJson});
         this.parallelTick();
       }
     }
   }
 
   onMainThreadMessage(e) {
-    if (e.data.msg == 'create-planner') {
-      this.create(e.data.workerCount, e.data.width, e.data.height);
-    } else if (e.data.msg == 'start-planner') {
+    if (e.data.msg == 'planner-create') {
+      this.create(e.data.workerCount, e.data.config);
+    } else if (e.data.msg == 'planner-start') {
       this.parallelTick();
     }
   }

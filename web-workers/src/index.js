@@ -8,7 +8,7 @@ import App from "./App.js";
 
 window.onload = () => {
   const app = new App();
-
+  app.reset()
   // Setup UI
   const toggleOverlay = document.querySelector("#toggleOverlay");
   toggleOverlay.addEventListener('click', event => {
@@ -40,10 +40,10 @@ window.onload = () => {
     }
   });
 
-  const resetButton = document.querySelector("#resetButton");
-  resetButton.addEventListener('click', event => {
-    app.reset();
-  });
+  // const resetButton = document.querySelector("#resetButton");
+  // resetButton.addEventListener('click', event => {
+  //   app.reset();
+  // });
 
   const startButton = document.querySelector("#startButton");
   startButton.addEventListener('click', event => {
