@@ -17,6 +17,8 @@ class SimpleWorkerPlanner {
   create(workerCount, config) {
     this.simulation = new BoidWorld(config);
 
+    this.timeStamp = null;
+
     this.workerCount = workerCount;
 
     // Create sub workers
@@ -38,6 +40,8 @@ class SimpleWorkerPlanner {
   }
 
   parallelTick() {
+    this.timeStamp = [];
+
     const boidsJson = this.simulation.boidsToJson;
     //console.log(boidsJson);
 
@@ -54,7 +58,7 @@ class SimpleWorkerPlanner {
   handleMessageFromWorker(e) {
     if (e.data.msg == 'planner-merge') {
       this.tickedWorkerCount++;
-      // Merge main simulation
+      console.log(e.data.timeStamp, "ms");
       this.simulation.mergeBoids(e.data.boids);
       // Merge sub workers
       // this.workers.forEach((worker, workerIndex) => {

@@ -17,10 +17,12 @@ self.onmessage = function(e) {
     // Overwrite boid state with the synchronized state from main thread
     self._localSimulation.boidsFromJson(e.data.boidsJson);
     // Compute a local tick
+    const startTime = performance.now();
     self._localSimulation.tick(start, end);
+    const timeStamp = performance.now() - startTime;
     // Post updated local state to main thread
     const boids = this._localSimulation.boidsToJson;
-    postMessage({msg: 'planner-merge', start, end, boids: boids});
+    postMessage({msg: 'planner-merge', start, end, boids: boids, timeStamp});
   } else if (e.data.msg === 'worker-merge') {
     this._localSimulation.mergeBoids(e.data.boids);
   }
