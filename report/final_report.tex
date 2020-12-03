@@ -99,19 +99,29 @@ Verdú et al. \cite{verdu} examine how utilizing web workers scales the performa
 
 This section covers the different architectures of the physics simulation application implemented in this paper. The main idea of the simulation is to generate a given amount
 of spherical objects and simulate their interactions via a graphical interface. These objects have attributes such as position, radius, velocity and acceleration. The 
-physics of the application includes simulating explosions and collisions between the objects.
+physics of the application includes simulating explosions and collisions between the objects. The number of these objects is changed to investigate the behaviour
+of the different architectures of the simulation.
+
+Figure \ref{fig:figure2} shows the default user interface of the application running the simulation.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[scale=0.5]{figs/figure2.png}
+	\caption{User interface of the simulation application.}
+	\label{fig:figure2}
+\end{figure}
 
 \subsection{Default simulation} 
 \label{sec:default}
 
-The first implementation of the physics simulation only utilized the main thread in computation. This default architecture of the application implemented classes for the
+The first implementation of the physics simulation only utilized the main DOM thread in computation. This default architecture of the application implemented classes for the
 spherical objects, their interactions and the physics stage. A class utilizing the PIXI JavaScript library was implemented for managing the game loop, rendering and
 physics simulation objects.
 
 \subsection{Spatial partitioning} 
 \label{sec:spatial}
 
-The first architectural decision only optimized the simulation by partitioning the physics space and it did not yet include web workers.
+The first architectural decision only optimized the simulation by partitioning the physics space and it did not yet include web workers. This implementation added a grid object used in constructing the physics space in a tree data structure.
 
 \subsection{One worker solution} 
 \label{sec:1workers}
@@ -120,7 +130,24 @@ After the spatial partitioning solution, an implementation with a single web wor
 in physics simulation only in the worker thread. The worker thread executed the simulation and communicated the state information to the main thread via the messaging 
 interface. The only responsibility of the main thread was then to read the received information and render the graphics accordingly.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+\subsection{Multiple workers solution} 
+\label{sec:nworkers}
+
+After re-factoring the application architecture to support calculating the simulation steps in a worker thread, the number of web workers was increased. In this solution,
+the main DOM thread communicated with a worker planner class, that organized and divided the computational tasks to be passed to multiple workers. After all the worker
+threads have finished calculating their respective simulation steps, the changes to the data have to be assembled merged in the main thread.
+
+\subsection{Data sharing}
+
+As stated in Section \ref{chap:introduction}, web workers communicate with the main thread and other threads via message sending. If data needs to be passed from one thread
+to another, this data needs to be serialized to JSON. This paper also investigates how message sending affects the performance of the simulation by implementing a version
+where the data is shared using a SharedArrayBuffer JavaScript object. This tool only supports sharing the data in a binary format, but it makes the data accessible from all the worker threads.
+
+\section{Methods}
+\label{sec:methods}
+
+This section describes the methods used for evaluating the different architectures of the simulation application.
+
 \section{Evaluation}
 \label{sec:sec2}
 
