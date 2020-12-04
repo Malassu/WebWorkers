@@ -63,8 +63,8 @@ HTML5 introduced web workers as a way to utilize concurrent computation in the d
 computationally demanding applications with the web browser while attempting to maintain a high quality of experience.
 
 This paper follows the implementation of a computer physics simulation and compares the architectural decisions that can be applied to it. Different architectures with and 
-without web workers are analysed and compared in terms of their performance metrics such as FPS, memory usage and message transfer time. The perceived quality of the
-simulation is also compared between the different versions.
+without web workers are analysed and compared in terms of their performance metrics such as FPS, memory usage, processing delay and message transfer time. The perceived 
+quality of the simulation is also compared between the different versions.
  
 \end{abstract}
 
@@ -81,7 +81,7 @@ Web workers also have some limitations. They can not use DOM operations or acces
 the worker threads is not possible. JavaScript is also unable to access the underlying hardware information of a computer to, for example, fetch the number of CPU cores. \cite{watanabe, verdu}
 
 This paper follows and compares the architecturally different implementations of a computer physics simulation. These architectures apply different ways to implement a 
-web-based application with and without web workers. The comparison is done with respect to performance metrics such as FPS, memory usage, message transfer time and 
+web-based application with and without web workers. The comparison is done with respect to performance metrics such as FPS, memory usage, message transfer time, processing delay and 
 perceived quality. After this introduction, section \ref{sec:soa} of this paper covers the literature and studies related to web workers. Section \ref{sec:implementation} describes all the
 physics simulation implementations made for the purposes of this research paper. Section \ref{sec:sec2} evaluates and compares the performance of these implementations and
 Section \ref{sec:conc} concludes this paper.
@@ -164,7 +164,23 @@ where the data is shared using a SharedArrayBuffer JavaScript object. This tool 
 \section{Methods}
 \label{sec:methods}
 
-This section describes the methods used for evaluating the different architectures of the simulation application.
+This section describes the methods used for evaluating the different architectures of the simulation application implemented for the purposes of this paper. The metrics used for evaluating it's performance are FPS, memory usage, message transfer time, processing delay and changes in user experience.
+
+\subsection{Developer tools}
+
+Browsers such like Firefox and Chrome offer a possibility to more closely inspect web services through developer tools. These tools offer insights into how demanding a given application
+is on the computational resources accessible by the browser. Memory usage and the FPS (frames per second) values given by developer tools are evaluated in the simulation
+case of this paper.
+
+\subsection{Timestamps}
+
+JavaScript timestamp functionality provides a possibility log timestamps to the console from different stages of application execution. This paper uses these timestamps to
+measure the processing delays caused by updating the simulation state in the cases of different architectures.
+
+\subsection{Perceived quality}
+
+The perceived quality of the simulation implementations is also measured by observing the executing application user interface visually. These implementations are compared
+with respect to the amount of visually prominent jitter they produce. Any other deviations in user experience between the simulation versions are also investigated.
 
 \section{Evaluation}
 \label{sec:sec2}
