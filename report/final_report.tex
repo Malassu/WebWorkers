@@ -59,9 +59,12 @@ HTML5, web, workers
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 \begin{abstract}
 
-HTML5 introduced web workers as a way to utilize concurrent computation in the domain of web-based JavaScript applications. This paper follows the implementation
-of a computer physics simulation and compares the architectural decisions that can be applied to it. Different architectures with and without web workers are
-analysed and compared in terms of their performance metrics such as FPS, memory usage and message transfer time.
+HTML5 introduced web workers as a way to utilize concurrent computation in the domain of web-based JavaScript applications. This opened up the possibility to host 
+computationally demanding applications with the web browser while attempting to maintain a high quality of experience.
+
+This paper follows the implementation of a computer physics simulation and compares the architectural decisions that can be applied to it. Different architectures with and 
+without web workers are analysed and compared in terms of their performance metrics such as FPS, memory usage and message transfer time. The perceived quality of the
+simulation is also compared between the different versions.
  
 \end{abstract}
 
@@ -74,10 +77,12 @@ Web workers operate by offloading processing tasks from the main browser thread 
 The communication between the threads is facilitated with message sending. The process of main thread web worker communication is illustrated in Figure \ref{fig:figure1}. 
 The main thread uses the "postMessage" function to send a message to a worker thread. The worker thread can handle this message using the "onMessage" function. The parameters x and y of Figure \ref{fig:figure1} represent the data, that can be shared via the messaging interface. \cite{doha, watanabe}
 
-Web workers also have some limitations. They can not use DOM operations or access window objects and parent objects. Also, direct data sharing between the main thread and the worker threads is not possible. \cite{watanabe}
+Web workers also have some limitations. They can not use DOM operations or access window objects and parent objects. Also, direct data sharing between the main thread and 
+the worker threads is not possible. JavaScript is also unable to access the underlying hardware information of a computer to, for example, fetch the number of CPU cores. \cite{watanabe, verdu}
 
 This paper follows and compares the architecturally different implementations of a computer physics simulation. These architectures apply different ways to implement a 
-web-based application with and without web workers. The comparison is done with respect to performance metrics such as FPS, memory usage and message transfer time. After this introduction, section \ref{sec:soa} of this paper covers the literature and studies related to web workers. Section \ref{sec:implementation} describes all the
+web-based application with and without web workers. The comparison is done with respect to performance metrics such as FPS, memory usage, message transfer time and 
+perceived quality. After this introduction, section \ref{sec:soa} of this paper covers the literature and studies related to web workers. Section \ref{sec:implementation} describes all the
 physics simulation implementations made for the purposes of this research paper. Section \ref{sec:sec2} evaluates and compares the performance of these implementations and
 Section \ref{sec:conc} concludes this paper.
 
@@ -91,11 +96,21 @@ Section \ref{sec:conc} concludes this paper.
 \section{Related Work}
 \label{sec:soa}
 
-For web-based games, Erbad et al. \cite{doha} propose a concurrent processing solution called DOHA, which consists of game event-loops running in worker threads and MultiProc, which is the module for scheduling, state management and other concurrent execution related tasks. Their game implementation had three main components: simulation, graphics rendering and AI. The main thread handles rendering and offloads game event processing to web workers. This communication also requires the sending of state information. In general, DOHA offered better scalability and responsiveness across different platforms. However, thread communication required replicating state across workers, which increased jitter.
+For web-based games, Erbad et al. \cite{doha} propose a concurrent processing solution called DOHA, which aims to provide better control over quality by unlocking the 
+multi-core processing capabilities. This solution consists of game event-loops running in worker threads and MultiProc, which is the module for scheduling, state 
+management and other concurrent execution related tasks. Their game implementation had three main components: simulation, graphics rendering and AI. The main thread 
+handles rendering and offloads game event processing to web workers. This communication also requires the sending of state information. In general, DOHA offered better 
+scalability and responsiveness across different platforms. However, thread communication required replicating state across workers, which increased jitter.
 
-Zhang et al. \cite{zhang} introduce WWOF, which is a framework for seamlessly offloading web workers to the cloud. On average, the framework achieved energy savings of 85\% on devices such as mobile phones, desktop computers and pads. The performance of the devices improved by a factor of 2-4.
+Zhang et al. \cite{zhang} introduce WWOF, which is a framework for seamlessly offloading web workers to the cloud. Their study investigated applying the framework to an 
+interactive animation application with a substantial amount of animation events and moving objects rendered on the screen. The main thread of the application would send 
+state data to the worker threads, which would then, after sending and receiving an acknowledgement message proceed to update this data according to the simulation rules. 
+All this data would then be sent back to the main thread for merging and rendering. On average, the framework achieved energy savings of 85\% on devices such as mobile 
+phones, desktop computers and pads. The performance of the devices improved by a factor of 2-4.
 
-Verdú et al. \cite{verdu} examine how utilizing web workers scales the performance of a JavaScript application. They found that the optimal number of workers depends on various factors such as the CPU architecture and the browser. Using a large number of web workers did not prove to be beneficial compared to using only a few.
+Verdú et al. \cite{verdu} examine how utilizing web workers scales the performance of a JavaScript application. Their research investigated using varying amounts of 
+workers in a synchronous ray tracing application and in an asynchronous hash calculation task. They found that the optimal number of workers depends on various factors 
+such as the CPU architecture, the worker execution model and the browser. Using a large number of web workers did not prove to be beneficial compared to using only a few.
 
 \section{Implementation}
 \label{sec:implementation}
@@ -138,7 +153,7 @@ interface. The only responsibility of the main thread was then to read the recei
 
 After re-factoring the application architecture to support calculating the simulation steps in a worker thread, the number of web workers was increased. In this solution,
 the main DOM thread communicated with a worker planner class, that organized and divided the computational tasks to be passed to multiple workers. After all the worker
-threads have finished calculating their respective simulation steps, the changes to the data have to be assembled merged in the main thread.
+threads have finished calculating their respective simulation steps, the changes to the data have to be assembled, merged and rendered in the main thread.
 
 \subsection{Data sharing}
 
