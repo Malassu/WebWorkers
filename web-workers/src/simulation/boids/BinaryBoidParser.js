@@ -47,6 +47,8 @@ class BinaryBoidParser {
 
   set buffer(buffer) {
     this._buffer = buffer;
+
+    this.initArrays(buffer.byteLength / 38);
   }
 
   getBoids() {
@@ -68,6 +70,39 @@ class BinaryBoidParser {
       exploded: Atomics.load(this._expArray, index) == 1
     }));
     
+  }
+
+  static bufferFromBoids(boids) {
+    const buf = new SharedArrayBuffer(38 * boids.length);
+
+    const pXArray    = new Float32Array(buf, 0, boids.length);
+    const pYArray    = new Float32Array(buf, 4*boids.length, boids.length);
+    const vXArray    = new Float32Array(buf, 8*boids.length, boids.length);
+    const vYArray    = new Float32Array(buf, 12*boids.length, boids.length);
+    const aXArray    = new Float32Array(buf, 16*boids.length, boids.length);
+    const aYArray    = new Float32Array(buf, 20*boids.length, boids.length);
+    const rArray     = new Float32Array(buf, 24*boids.length, boids.length);
+    const maxSArray  = new Float32Array(buf, 28*boids.length, boids.length);
+    const idArray    = new Uint32Array(buf, 32*boids.length, boids.length);
+    // collided and exploded are boolean values so they could be store more compactly.
+    const colArray   = new Uint8Array(buf, 36*boids.length, boids.length);
+    const expArray   = new Uint8Array(buf, 37*boids.length, boids.length);
+
+    boids.map((boid, index) => {
+      pXArray[index] = boid.x;
+      pYArray[index] = boid.y;
+      vXArray[index] = boid.velocity.x;
+      vYArray[index] = boid.velocity.y;
+      aXArray[index] = boid.acceleration.x;
+      aYArray[index] = boid.acceleration.y;
+      rArray[index] = boid.radius;
+      maxSArray[index] = boid.maxSpeed;
+      idArray[index] = boid.id;
+      colArray[index] = boid.collided;
+      expArray[index] = boid.exploded;
+    });
+
+    return buf;
   }
 
   update(boids) {

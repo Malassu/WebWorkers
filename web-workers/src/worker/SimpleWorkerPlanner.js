@@ -56,6 +56,16 @@ class SimpleWorkerPlanner {
     
     this.workers.forEach((worker) => {
       worker.postMessage({msg: 'tick-json', boidsJson});
+    });
+  }
+
+  updateBuffers() {
+    const buf = this.simulation.boidsToBuffer();
+
+    this.simulation.queueBuffer(buf);
+
+    this.workers.forEach((worker) => {
+      worker.postMessage({msg: 'update-buffer', buf});
     })
   }
 

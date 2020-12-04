@@ -30,10 +30,17 @@ self.onmessage = function(e) {
       // Compute a local tick
       self._localSimulation.tick();
       self._localSimulation.boidsToBinary();
+
       // Post updated local state to main thread
       postMessage({msg: 'ticked-shared-binary'});
+
+      // If boids are added dynamically, the binary buffer needs to be updated.
+      self._localSimulation.updateBuffer();
       return;
 
+      case 'update-buffer':
+        self._localSimulation.queueBuffer(e.data.buf);
+        return;
     default:
       return;
 

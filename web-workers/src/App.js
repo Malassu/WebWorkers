@@ -9,7 +9,7 @@ class App {
     const width = 1800;
     const height = 900;
     this.simulation = new BoidWorld({ 
-      numOfBoids: 4000, 
+      numOfBoids: 0, 
       bounds: {
         x: [0, width],
         y: [0, height]
@@ -37,6 +37,8 @@ class App {
       this.simulation.addBoid();
       this._renderer.addSprite();
     });
+
+    this._planner.updateBuffers();
   }
 
   setWorldState(option, value) {
@@ -55,6 +57,7 @@ class App {
   }
 
   nextTickCallback() {
+    this.simulation.updateBuffer();
     this.readyToTick = true;
   }
 }

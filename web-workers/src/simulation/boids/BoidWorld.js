@@ -27,6 +27,7 @@ class BoidWorld {
     this._bounded = this._bounded.bind(this);
     this._collision = this._collision.bind(this);
     this._explosion = this._explosion.bind(this);
+    this._queuedBuffer = null;
 
     // TODO: Make use of binary parser optional
     this._binaryParser = new BinaryBoidParser(this._state.getState("numOfBoids"), sharedBuffer);
@@ -300,14 +301,27 @@ class BoidWorld {
     }
   }
 
+  queueBuffer(buffer) {
+    this._queuedBuffer = buffer;
+  }
+
+  updateBuffer() {
+    if (this._queuedBuffer) {
+      this.binaryBuffer = this._queuedBuffer;
+      this._queuedBuffer = null;
+      this._boids = this._binaryParser.getBoids().map(({ position, velocity, id }) => this._generateBoid(false, position, velocity, id));
+    }
+  }
+
   get binaryBuffer() {
     return this._binaryParser.buffer;
   }
 
   set binaryBuffer(buffer) {
-    
-  }
+    this._binaryParser.buffer = buffer;
+  } 
 
+  // TODO: Allow partial update based on intervals.
   boidsFromBinary() {
     this._binaryParser.getBoids().map((state, index) => {
       this._boids[index].mergeState(state);
@@ -316,6 +330,11 @@ class BoidWorld {
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
   }
 
+  boidsToBuffer() {
+    return BinaryBoidParser.bufferFromBoids(this._boids);
+  }
+
+  // TODO: Allow partial update based on intervals.
   boidsToBinary() {
     this._binaryParser.update(this._boids);
   }
