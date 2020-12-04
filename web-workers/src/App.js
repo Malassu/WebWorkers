@@ -45,8 +45,9 @@ class App {
 
   loop() {    
     // tick simulation only if all previous ticks have been merged
+    // TODO: Allow dynamix selection of used tick method.
     if (this.readyToTick) {
-      this._planner.parallelTick();
+      this._planner.parallelTickSharedBinary();
       this.readyToTick = false;
     }
     this._renderer.render();

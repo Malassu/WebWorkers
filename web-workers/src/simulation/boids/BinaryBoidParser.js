@@ -16,24 +16,28 @@
 class BinaryBoidParser {
   constructor (numOfBoids, sharedBuffer) {
     // Use input buffer or create a new one.
-    this._buffer     = sharedBuffer || new SharedArrayBuffer(38 * numOfBoids);
+    this._buffer = sharedBuffer || new SharedArrayBuffer(38 * numOfBoids);
 
     this.getBoids = this.getBoids.bind(this);
     
+    this.initArrays(numOfBoids);
+  }
+
+  initArrays(numOfBoids) {
     // Data is handled with typed arrays.
     // TODO: Remove repetition.
-    this._pXArray    = new Float32Array(this.buffer, 0, numOfBoids);
-    this._pYArray    = new Float32Array(this.buffer, 4*numOfBoids, numOfBoids);
-    this._vXArray    = new Float32Array(this.buffer, 8*numOfBoids, numOfBoids);
-    this._vYArray    = new Float32Array(this.buffer, 12*numOfBoids, numOfBoids);
-    this._aXArray    = new Float32Array(this.buffer, 16*numOfBoids, numOfBoids);
-    this._aYArray    = new Float32Array(this.buffer, 20*numOfBoids, numOfBoids);
-    this._rArray     = new Float32Array(this.buffer, 24*numOfBoids, numOfBoids);
-    this._maxSArray  = new Float32Array(this.buffer, 28*numOfBoids, numOfBoids);
-    this._idArray    = new Uint32Array(this.buffer, 32*numOfBoids, numOfBoids);
+    this._pXArray    = new Float32Array(this._buffer, 0, numOfBoids);
+    this._pYArray    = new Float32Array(this._buffer, 4*numOfBoids, numOfBoids);
+    this._vXArray    = new Float32Array(this._buffer, 8*numOfBoids, numOfBoids);
+    this._vYArray    = new Float32Array(this._buffer, 12*numOfBoids, numOfBoids);
+    this._aXArray    = new Float32Array(this._buffer, 16*numOfBoids, numOfBoids);
+    this._aYArray    = new Float32Array(this._buffer, 20*numOfBoids, numOfBoids);
+    this._rArray     = new Float32Array(this._buffer, 24*numOfBoids, numOfBoids);
+    this._maxSArray  = new Float32Array(this._buffer, 28*numOfBoids, numOfBoids);
+    this._idArray    = new Uint32Array(this._buffer, 32*numOfBoids, numOfBoids);
     // collided and exploded are boolean values so they could be store more compactly.
-    this._colArray   = new Uint8Array(this.buffer, 36*numOfBoids, numOfBoids);
-    this._expArray   = new Uint8Array(this.buffer, 37*numOfBoids, numOfBoids);
+    this._colArray   = new Uint8Array(this._buffer, 36*numOfBoids, numOfBoids);
+    this._expArray   = new Uint8Array(this._buffer, 37*numOfBoids, numOfBoids);
   }
 
 

@@ -265,10 +265,6 @@ class BoidWorld {
     this.boidsFromSerialized(JSON.parse(jsonStr));
   }
 
-  getBinaryBuffer() {
-    return this._binaryParser.buffer;
-  }
-
   gridUpdate() {
     const elementLimit = this.getState("gridElementLimit");
 
@@ -302,6 +298,14 @@ class BoidWorld {
         break;
       }
     }
+  }
+
+  get binaryBuffer() {
+    return this._binaryParser.buffer;
+  }
+
+  set binaryBuffer(buffer) {
+    
   }
 
   boidsFromBinary() {

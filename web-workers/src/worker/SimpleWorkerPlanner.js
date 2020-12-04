@@ -35,7 +35,7 @@ class SimpleWorkerPlanner {
 
     if (crossOriginIsolated) {
       console.log("Shared data is supported.");
-      message.sharedBuffer = this.simulation.getBinaryBuffer();
+      message.sharedBuffer = this.simulation.binaryBuffer;
     }
     else {
       console.log("Shared data is not supported.");
@@ -45,46 +45,46 @@ class SimpleWorkerPlanner {
     })
   } 
   
-  /*
-  parallelTick() {
-    //const boidsJson = this.simulation.boidsToJson;
+  parallelTickSharedBinary() {
     this.workers.forEach((worker) => {
-      worker.postMessage({msg: 'tick'});
+      worker.postMessage({ msg: 'tick-shared-binary' });
     })
   }
 
-  handleMessageFromWorker(e) {
-    if (e.data.msg == 'ticked') {
-      this.tickedWorkerCount++;
-      //this.simulation.boidsFromBinary();
-      // merge worker states to main simulation when all workers have ticked
-      if (this.tickedWorkerCount === this.workerCount) {
-        // reset ticked count and request next tick
-        this.nextTickCallback();
-        this.tickedWorkerCount = 0;
-      }
-    }
-  }
-  */
-
-  parallelTick() {
+  parallelTickJson() {
     const boidsJson = this.simulation.serializedBoids;
     
     this.workers.forEach((worker) => {
-      worker.postMessage({msg: 'tick', boidsJson});
+      worker.postMessage({msg: 'tick-json', boidsJson});
     })
   }
 
   handleMessageFromWorker(e) {
-    if (e.data.msg == 'ticked') {
-      this.tickedWorkerCount++;
-      this.simulation.mergeBoids(e.data.boids);
-      // merge worker states to main simulation when all workers have ticked
-      if (this.tickedWorkerCount === this.workerCount) {
-        // reset ticked count and request next tick
-        this.nextTickCallback();
-        this.tickedWorkerCount = 0;
-      }
+    switch (e.data.msg) {
+      case 'ticked-json':
+        this.tickedWorkerCount++;
+        this.simulation.mergeBoids(e.data.boids);
+        // merge worker states to main simulation when all workers have ticked
+        if (this.tickedWorkerCount === this.workerCount) {
+          // reset ticked count and request next tick
+          this.nextTickCallback();
+          this.tickedWorkerCount = 0;
+        }
+        return;
+
+      case 'ticked-shared-binary':
+        this.tickedWorkerCount++;
+        this.simulation.boidsFromBinary();
+        // merge worker states to main simulation when all workers have ticked
+        if (this.tickedWorkerCount === this.workerCount) {
+          // reset ticked count and request next tick
+          this.nextTickCallback();
+          this.tickedWorkerCount = 0;
+        }
+        return;
+
+        default:
+          return;
     }
   }
 };

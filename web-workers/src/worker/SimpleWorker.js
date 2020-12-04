@@ -9,25 +9,33 @@ import BoidWorld from '../simulation/boids/BoidWorld.js';
 self._localSimulation = null;
 
 self.onmessage = function(e) {
-  if (e.data.msg === 'init') {
-    this._localSimulation = BoidWorld.cloneWorld(e.data.serialized, e.data.sharedBuffer);
+  switch (e.data.msg) {
+    case 'init':
+      this._localSimulation = BoidWorld.cloneWorld(e.data.serialized, e.data.sharedBuffer);
+      return;
 
-  } else if (e.data.msg === 'tick') {
-    // Overwrite boid state with the synchronized state from main thread
-    self._localSimulation.boidsFromSerialized(e.data.boidsJson);
-    // Compute a local tick
-    self._localSimulation.tick();
-    // Post updated local state to main thread
-    const boids = this._localSimulation.serializedBoids;
-    postMessage({msg: 'ticked', boids: boids});
-  }
+    case 'tick-json':
+      // Overwrite boid state with the synchronized state from main thread
+      self._localSimulation.boidsFromSerialized(e.data.boidsJson);
+      // Compute a local tick
+      self._localSimulation.tick();
+      // Post updated local state to main thread
+      const boids = this._localSimulation.serializedBoids;
+      postMessage({msg: 'ticked-json', boids: boids});
+      return;
+    
+    case 'tick-shared-binary':
+      // Overwrite boid state with the synchronized state from main thread
+      self._localSimulation.boidsFromBinary();
+      // Compute a local tick
+      self._localSimulation.tick();
+      self._localSimulation.boidsToBinary();
+      // Post updated local state to main thread
+      postMessage({msg: 'ticked-shared-binary'});
+      return;
+
+    default:
+      return;
+
+  } 
 }
-/*
-// Overwrite boid state with the synchronized state from main thread
-self._localSimulation.boidsFromBinary();
-// Compute a local tick
-self._localSimulation.tick();
-self._localSimulation.boidsToBinary();
-// Post updated local state to main thread
-postMessage({msg: 'ticked'});
-*/
