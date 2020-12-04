@@ -102,13 +102,17 @@ class Grid {
   }
 
   findFittingLeaf(element) {
+    let candidate = this;
+
     if (!element.inBounds(this.bounds))
-      return null;
+        return null;
 
-    if (this._elements)
-      return this;
+    while (true) {
+      if (candidate._elements)
+        return candidate;
 
-    return this.leafNodes.find(leaf => element.inBounds(leaf.bounds));
+      candidate = candidate.children.find(child => element.inBounds(child.bounds));
+    }
   }
 
   get bounds() {

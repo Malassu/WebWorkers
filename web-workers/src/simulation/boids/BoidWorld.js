@@ -85,7 +85,6 @@ class BoidWorld {
     this._boids.map(boid => boid.tick(this._state.getState("bounds")));
 
     this.gridUpdate();
-
   }
 
   addBoid() {
