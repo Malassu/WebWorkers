@@ -44,7 +44,7 @@ class BoidWorld {
     } 
     else {
       this._boids = Array.from({ length: this._state.getState("numOfBoids") }, () => this._generateBoid());
-      this._binaryParser.update(this._boids);
+      this._binaryParser.update(this._boids, 0, this._boids.length);
     }
 
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
@@ -413,6 +413,10 @@ class BoidWorld {
     return this._binaryParser.buffer;
   }
 
+  get binaryArrays() {
+    this._binaryParser.getArrays();
+  }
+
   set binaryBuffer(buffer) {
     this._binaryParser.buffer = buffer;
   } 
@@ -470,10 +474,8 @@ class BoidWorld {
   // TODO: Allow partial update based on intervals.
   boidsFromBinary() {
     this._binaryParser.getBoids().map((state, index) => {
-      this._boids[index].mergeState(state);
+      this._boids[index].updateState(state);
     });
-
-    this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
   }
 
   boidsToBuffer() {
@@ -481,8 +483,8 @@ class BoidWorld {
   }
 
   // TODO: Allow partial update based on intervals.
-  boidsToBinary() {
-    this._binaryParser.update(this._boids);
+  boidsToBinary(start=0, end=this._boids.length) {
+    this._binaryParser.update(this._boids, start, end);
   }
 
   boidsToJson(start=0, end=this._boids.length) {

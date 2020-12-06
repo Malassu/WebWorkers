@@ -51,6 +51,23 @@ class BinaryBoidParser {
     this.initArrays(buffer.byteLength / 38);
   }
 
+  getArrays() {
+    return { 
+      pXArray: this._pXArray,
+      pYArray: this._pYArray,
+      vXArray: this._vXArray,
+      vYArray: this._vYArray,
+      aXArray: this._aXArray,
+      aYArray: this._aYArray,
+      rArray : this._rArray,
+      maxSArray: this._maxSArray,
+      idArray: this._idArray,
+      // collided and exploded are boolean values so they could be store more compactly.
+      colArray: this._colArray,
+      expArray: this._expArray,
+    };
+  }
+
   getBoids() {
     return Array.from({ length: this._pXArray.length }, (v, index) => ({
      position: {
@@ -170,8 +187,10 @@ class BinaryBoidParser {
 
   };
 
-  update(boids) {
-    boids.map((boid, index) => {
+  update(boids, start, end) {
+    for (let index=start; index < end; index++) {
+      const boid = boids[index];
+
       this._pXArray[index] = boid.x;
       this._pYArray[index] = boid.y;
       this._vXArray[index] = boid.velocity.x;
@@ -183,7 +202,7 @@ class BinaryBoidParser {
       this._idArray[index] = boid.id;
       this._colArray[index] = boid.collided;
       this._expArray[index] = boid.exploded;
-    })
+    }
   }
 };
 
