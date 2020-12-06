@@ -9,7 +9,6 @@ class SimpleWorkerPlanner {
     this.readyForNextTick = null;
     this.workers = [];
     this.tickedWorkerCount = 0;
-    this.transferableArrays = this.simulation.transferableBoidArrays;
 
     this.movedWorkerCount = 0;
 
@@ -22,6 +21,8 @@ class SimpleWorkerPlanner {
   // Create BoidWorld within planner context and initialize workers
   create(workerCount, config) {
     this.simulation = new BoidWorld(config);
+
+    this.transferableArrays = this.simulation.transferableBoidArrays;
 
     this.tickStart = null;
     this.workerTimeStamps = [];
@@ -69,7 +70,7 @@ class SimpleWorkerPlanner {
 
   parallelTickSharedBinary() {
     this.workers.forEach((worker) => {
-      worker.postMessage({ msg: 'tick-shared-binary' });
+      worker.postMessage({ msg: 'worker-tick-shared-binary' });
     })
   }
 
@@ -115,7 +116,7 @@ class SimpleWorkerPlanner {
           }
         });
         
-        this.parallelTick();
+        this.parallelTickJson();
         this.readyForNextTick = false;
       }
     }, 33);
@@ -136,19 +137,9 @@ class SimpleWorkerPlanner {
     });
   }
 
-  handleMessageFromWorker(e) {
+  handleMessageFromWorker(index, e) {
+
     switch (e.data.msg) {
-      case 'ticked-json':
-        this.tickedWorkerCount++;
-        this.simulation.mergeBoids(e.data.boids);
-        // merge worker states to main simulation when all workers have ticked
-        if (this.tickedWorkerCount === this.workerCount) {
-          // reset ticked count and request next tick
-          this.nextTickCallback();
-          this.tickedWorkerCount = 0;
-        }
-        return;
-  
       case 'ticked-shared-binary':
         this.tickedWorkerCount++;
         this.simulation.boidsFromBinary();

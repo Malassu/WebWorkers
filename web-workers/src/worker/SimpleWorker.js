@@ -17,16 +17,14 @@ self.onmessage = function(e) {
         this._localSimulation.boidsFromJson(e.data.boids);
       return;
 
-    case 'tick-json':
+    case 'worker-tick-json':
       const startTimeAll = performance.now();
       const start = e.data.start;
       const end = e.data.end;
 
-      // Overwrite boid state with the synchronized state from main thread
-      self._localSimulation.boidsFromSerialized(e.data.boidsJson);
       // Compute a local tick
       const startTimeTick = performance.now();
-      self._localSimulation.tick();
+      self._localSimulation.tick(start, end);
       const tickTime = performance.now() - startTimeTick;
 
       // Post updated local state to main thread
@@ -41,7 +39,7 @@ self.onmessage = function(e) {
       // postMessage({msg: 'planner-move'});
       return;
     
-    case 'tick-shared-binary':
+    case 'worker-tick-shared-binary':
       // If boids are added dynamically, the binary buffer needs to be updated.
       self._localSimulation.updateBuffer();
 

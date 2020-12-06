@@ -19,7 +19,8 @@ class App {
       boidRadius: 10,
       explosionIntesity: 100,
       explosionRadius: 100,
-      maxSpeed: 2
+      maxSpeed: 2,
+      explosion: false
     }
 
     // this._renderer = new PixiRenderer(width, height);
