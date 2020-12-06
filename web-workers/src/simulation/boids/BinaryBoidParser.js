@@ -105,6 +105,71 @@ class BinaryBoidParser {
     return buf;
   }
 
+  static arraysFromBoids(boids, numOfSlices = 1) {
+    
+    const createArrays = (boids) => ({
+      pXArray: new Float32Array(boids.map(boid => boid.x)).buffer,
+      pYArray: new Float32Array(boids.map(boid => boid.y)).buffer,
+      vXArray: new Float32Array(boids.map(boid => boid.velocity.x)).buffer,
+      vYArray: new Float32Array(boids.map(boid => boid.velocity.y)).buffer,
+      aXArray: new Float32Array(boids.map(boid => boid.acceleration.x)).buffer,
+      aYArray: new Float32Array(boids.map(boid => boid.acceleration.y)).buffer,
+      rArray : new Float32Array(boids.map(boid => boid.radius)).buffer,
+      maxSArray: new Float32Array(boids.map(boid => boid.maxSpeed)).buffer,
+      idArray: new Uint32Array(boids.map(boid => boid.id)).buffer,
+      // collided and exploded are boolean values so they could be store more compactly.
+      colArray: new Uint8Array(boids.map(boid => boid.collided)).buffer,
+      expArray: new Uint8Array(boids.map(boid => boid.exploded)).buffer,
+    });
+
+
+    const sliceLength = Math.floor(boids.length / numOfSlices);
+
+    const result = [];
+
+    let slicesCreated = 1;
+    let sliceStartIndex = 0;
+
+    while (true) {
+      // The last slice has sliceLength + 1 elements when length is odd.
+      // Also handles cases where numOfSlices <= 0
+      if (slicesCreated >= numOfSlices) {
+        result.push(createArrays(boids.slice(sliceStartIndex, boids.length)));
+        break;
+      }
+      else {
+        result.push(createArrays(boids.slice(sliceStartIndex, sliceStartIndex + sliceLength)));
+        sliceStartIndex += sliceLength;
+        slicesCreated += 1;
+      }
+    }
+
+
+    return result;
+
+  };
+
+  static arraysFromBuffers({ 
+    pXArray, pYArray, vXArray, vYArray, aXArray, aYArray, 
+    rArray, maxSArray, idArray, colArray, expArray
+  }) {
+    
+    return {
+      pXArray: new Float32Array(pXArray),
+      pYArray: new Float32Array(pYArray),
+      vXArray: new Float32Array(vXArray),
+      vYArray: new Float32Array(vYArray),
+      aXArray: new Float32Array(aXArray),
+      aYArray: new Float32Array(aYArray),
+      rArray : new Float32Array(rArray),
+      maxSArray: new Float32Array(maxSArray),
+      idArray: new Uint32Array(idArray),
+      colArray: new Uint8Array(colArray),
+      expArray: new Uint8Array(expArray),
+    };
+
+  };
+
   update(boids) {
     boids.map((boid, index) => {
       this._pXArray[index] = boid.x;

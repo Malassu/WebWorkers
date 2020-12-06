@@ -310,7 +310,11 @@ class BoidWorld {
       this.binaryBuffer = this._queuedBuffer;
       this._queuedBuffer = null;
       this._boids = this._binaryParser.getBoids().map(({ position, velocity, id }) => this._generateBoid(false, position, velocity, id));
+      this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
+      return true;
     }
+
+    return false;
   }
 
   get binaryBuffer() {
@@ -320,6 +324,56 @@ class BoidWorld {
   set binaryBuffer(buffer) {
     this._binaryParser.buffer = buffer;
   } 
+
+  get transferableBoidArrays() {
+    return BinaryBoidParser.arraysFromBoids(this._boids);
+  }
+
+  writeBoidsToTransferable(data) {
+
+    const { 
+      pXArray, pYArray, vXArray, vYArray, aXArray, aYArray, 
+      rArray, maxSArray, idArray, colArray, expArray
+    } = BinaryBoidParser.arraysFromBuffers(data);
+
+    for (let index = 0; index < idArray.length; index++) {
+      const boid = this._boids[idArray[index] - 1];
+
+      pXArray[boid.id] = boid.x;
+      pYArray[boid.id] = boid.y;
+      vXArray[boid.id] = boid.velocity.x;
+      vYArray[boid.id] = boid.velocity.y;
+      aXArray[boid.id] = boid.acceleration.x;
+      aYArray[boid.id] = boid.acceleration.y;
+      colArray[boid.id] = boid.collided;
+      expArray[boid.id] = boid.exploded;
+    }
+
+    return [ 
+      pXArray.buffer, pYArray.buffer, vXArray.buffer, vYArray.buffer, aXArray.buffer, aYArray.buffer, 
+      rArray.buffer, maxSArray.buffer, idArray.buffer, colArray.buffer, expArray.buffer
+    ];
+  }
+
+  mergeTransferables(data) {
+    const { 
+      pXArray, pYArray, vXArray, vYArray, aXArray, aYArray, 
+      rArray, maxSArray, idArray, colArray, expArray
+    } = BinaryBoidParser.arraysFromBuffers(data);
+
+    for (let index = 0; index < idArray.length; index++) {
+      const boid = this._boids[idArray[index] - 1];
+
+      boid.x = pXArray[index];
+      boid.y = pYArray[index];
+      boid.velocity.x = vXArray[index];
+      boid.velocity.y = vYArray[index];
+      boid.acceleration.x = aXArray[index];
+      boid.acceleration.y = aYArray[index];
+      boid.collided = colArray[index];
+      boid.exploded = expArray[index];
+    }
+  }
 
   // TODO: Allow partial update based on intervals.
   boidsFromBinary() {

@@ -25,6 +25,9 @@ self.onmessage = function(e) {
       return;
     
     case 'tick-shared-binary':
+      // If boids are added dynamically, the binary buffer needs to be updated.
+      self._localSimulation.updateBuffer();
+
       // Overwrite boid state with the synchronized state from main thread
       self._localSimulation.boidsFromBinary();
       // Compute a local tick
@@ -33,9 +36,19 @@ self.onmessage = function(e) {
 
       // Post updated local state to main thread
       postMessage({msg: 'ticked-shared-binary'});
+      return;
 
-      // If boids are added dynamically, the binary buffer needs to be updated.
-      self._localSimulation.updateBuffer();
+      case 'tick-transferable-binary':
+        // Compute a local tick
+        self._localSimulation.tick();
+
+        // Post updated local state to main thread
+        // NOTE: the function writeBoidsToTransferable returns the required transferable list https://developers.google.com/web/updates/2011/12/Transferable-Objects-Lightning-Fast
+        
+        postMessage({ ...e.data, msg: "ticked-transferable-binary" }, self._localSimulation.writeBoidsToTransferable(e.data));        
+        // If boids are added dynamically, the binary buffer needs to be updated.
+        // NOTE: Update done using shared buffer for convinience.
+        self._localSimulation.updateBuffer();
       return;
 
       case 'update-buffer':

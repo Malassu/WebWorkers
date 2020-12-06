@@ -7,7 +7,8 @@ class SimpleWorkerPlanner {
     this.workerCount = workerCount;
     this.workers = [];
     this.tickedWorkerCount = 0;
-    
+    this.transferableArrays = this.simulation.transferableBoidArrays;
+
     // callback to request next tick from the application
     this.nextTickCallback = nextTickCallback;
     
@@ -43,11 +44,21 @@ class SimpleWorkerPlanner {
 
       worker.postMessage(message);
     })
-  } 
+  }
+  
+  updateTransferables({ msg, index, ...rest }) {
+    this.transferableArrays[index] = rest;
+  }
   
   parallelTickSharedBinary() {
     this.workers.forEach((worker) => {
       worker.postMessage({ msg: 'tick-shared-binary' });
+    })
+  }
+
+  parallelTickTransferableBinary() {
+    this.workers.forEach((worker, index) => {
+      worker.postMessage({ msg: 'tick-transferable-binary', index, ...this.transferableArrays[index]}, Object.values(this.transferableArrays[index]));
     })
   }
 
@@ -66,7 +77,12 @@ class SimpleWorkerPlanner {
 
     this.workers.forEach((worker) => {
       worker.postMessage({msg: 'update-buffer', buf});
-    })
+    });
+  }
+
+  updateBoids() {
+    if (this.simulation.updateBuffer())
+      this.transferableArrays = this.simulation.transferableBoidArrays;
   }
 
   handleMessageFromWorker(e) {
@@ -92,6 +108,18 @@ class SimpleWorkerPlanner {
           this.tickedWorkerCount = 0;
         }
         return;
+
+        case 'ticked-transferable-binary':
+          this.tickedWorkerCount++;
+          this.simulation.mergeTransferables(e.data);
+          this.updateTransferables(e.data);
+          // merge worker states to main simulation when all workers have ticked
+          if (this.tickedWorkerCount === this.workerCount) {
+            // reset ticked count and request next tick
+            this.nextTickCallback();
+            this.tickedWorkerCount = 0;
+          }
+          return;
 
         default:
           return;

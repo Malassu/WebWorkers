@@ -9,7 +9,7 @@ class App {
     const width = 1800;
     const height = 900;
     this.simulation = new BoidWorld({ 
-      numOfBoids: 0, 
+      numOfBoids: 4000, 
       bounds: {
         x: [0, width],
         y: [0, height]
@@ -49,7 +49,7 @@ class App {
     // tick simulation only if all previous ticks have been merged
     // TODO: Allow dynamix selection of used tick method.
     if (this.readyToTick) {
-      this._planner.parallelTickSharedBinary();
+      this._planner.parallelTickTransferableBinary();
       this.readyToTick = false;
     }
     this._renderer.render();
@@ -57,7 +57,7 @@ class App {
   }
 
   nextTickCallback() {
-    this.simulation.updateBuffer();
+    this._planner.updateBoids();
     this.readyToTick = true;
   }
 }
