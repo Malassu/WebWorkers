@@ -17,13 +17,16 @@ class App {
         y: [0, this.height]
       },
       boidRadius: 10,
+      collision: true,
+      explosion: true,
       explosionIntesity: 100,
+      explosionsPerTick: 1,
       explosionRadius: 100,
       maxSpeed: 2,
       explosion: false
     }
 
-    // this._renderer = new PixiRenderer(width, height);
+    // this._renderer = new PixiRenderer(this.config);
     this._renderer = new CanvasRenderer(this.width, this.height);
     this._planner = new Worker({type:'module'});
     this._planner.addEventListener('message', this.handleMessageFromPlanner.bind(this));

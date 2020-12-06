@@ -3,6 +3,7 @@ import Boid from "./Boid.js";
 import Grid from "../grid/Grid.js";
 import BinaryBoidParser from "./BinaryBoidParser.js";
 import { getRandom2D, Vector2D } from "../../utils/vectors.js";
+import { timingSafeEqual } from "crypto";
 
 const BOID_RENDER_STATE = ["position", "collided", "exploded"];
 const BOID_FORCE_STATE = ["acceleration", "collided", "exploded"];
@@ -74,34 +75,34 @@ class BoidWorld {
   }
 
   // Runs next step of the simulation by calculating forces affecting a partition of boids
-  tick(start=0, end=this._boids.length) {
+  tick(start=0, end=this._boids.length, explosionIndices=this.generateExplosions()) {
+    this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
 
-    // clear behavior status
-    this._boids.forEach((boid) => {
-      boid.collided = false;
-      boid.exploded = false;
-    });
+    this._boids.map(boid => boid.collided = false);
 
     // Apply behavior forces
     ["bounded", "collision", "explosion"].map(rule => {
       if (this._state.getState(rule))
-        this[`_${ rule }`](start, end);
+        this[`_${ rule }`](start, end, explosionIndices);
     });
+
+    for (let index = start; index < end; index++) {
+      this._boids[index].tick(this._state.getState("bounds"));
+    }
   }
 
   // Calculate new boid positions based on simulated forces
-  // move() {
-  //   // Update boid positions
-  //   for (let i=0; i<this._boids.length; i++) {
-  //     this._boids[i].tick(this._state.getState("bounds"));
-  //   }
-  //   this.updateGrid();
-  // }
+  move() {
+    // Update boid positions
+    for (let i=0; i<this._boids.length; i++) {
+      this._boids[i].tick(this._state.getState("bounds"));
+    }
+  }
 
    updateGrid() {
 
      // Find fitting leaf
-     this._boids.forEach(boid => this._grid.findFittingLeaf(boid));
+     this._boids.map(boid => this._grid.findFittingLeaf(boid));
 
      const elementLimit = this.getState("gridElementLimit");
 
@@ -247,37 +248,78 @@ class BoidWorld {
   }
 
   // Calculate explosion forces.
-  _explosion(start, end) {
-    // Choose state.explosionsPerTick number of boids.
-    const randomBoidIndices = getRandom(this._boids.slice(start, end).map(boid => boid.id), this._state.getState("explosionsPerTick"));
+  // _explosion(start, end) {
+  //   // Choose state.explosionsPerTick number of boids.
+  //   const randomBoidIndices = getRandom(this._boids.slice(start, end).map(boid => boid.id), this._state.getState("explosionsPerTick"));
+  //   const explosionRadius = this.getState("explosionRadius");
+  //   const explosionIntensity = this.getState("explosionIntesity");
+  //   const explosionProb = this.getState("explosionProb");
+
+  //   // For each boid B:
+  //   for (const explosionIndex of randomBoidIndices) {
+  //     const explosionBoid = this._boids[explosionIndex];
+  //     if (Math.random() < explosionProb) {
+  //       explosionBoid.exploded = true;
+        
+  //       for (const victimBoid of this._boids) {
+  //         // Notice that n can later be used as a normal vector for calculating the acceleration.
+  //         let n = victimBoid.position.subtract(explosionBoid.position);
+  //         const dist = n.length;
+
+  //         // If dist === 0 assume victimBoid === explosion boid
+  //         if (dist > 0 && dist < explosionRadius + explosionBoid.radius + victimBoid.radius) {
+  //           // Calculate normal vector n from explosionBoid to victim
+  //           n = n.normalized();
+
+  //           // Add (explosionRadius / dist )*state.explosionIntensity * dot(v2, n)*(n) to the other boid's acceleration. v2 is the other boid's velocity.
+  //           //console.log(explosionIntensity);
+  //           victimBoid.acceleration = victimBoid.acceleration.add(n.scale((explosionRadius / dist ) * explosionIntensity)).add(n.scale(Math.abs(n.dot(victimBoid.velocity))));
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+
+  // Calculate explosion forces for boids that were flagged to explode
+  _explosion(start, end, explosionIndices) {
     const explosionRadius = this.getState("explosionRadius");
     const explosionIntensity = this.getState("explosionIntesity");
-    const explosionProb = this.getState("explosionProb");
+    const explodingBoids = this._boids.filter(boid => explosionIndices.includes(boid.id));
+    
+    for (const explosionBoid of explodingBoids) {
+      // If this boid was flagged to explode go through the victims within assigned section
+      for (const victimBoid of this._boids.slice(start, end)) {
+        // Notice that n can later be used as a normal vector for calculating the acceleration.
+        let n = victimBoid.position.subtract(explosionBoid.position);
+        const dist = n.length;
 
-    // For each boid B:
-    for (const explosionIndex of randomBoidIndices) {
-      const explosionBoid = this._boids[explosionIndex];
-      if (Math.random() < explosionProb) {
-        explosionBoid.exploded = true;
-        
-        for (const victimBoid of this._boids) {
-          // Notice that n can later be used as a normal vector for calculating the acceleration.
-          let n = victimBoid.position.subtract(explosionBoid.position);
-          const dist = n.length;
+        // If dist === 0 assume victimBoid === explosion boid
+        if (dist > 0 && dist < explosionRadius + explosionBoid.radius + victimBoid.radius) {
+          // Calculate normal vector n from explosionBoid to victim
+          n = n.normalized();
 
-          // If dist === 0 assume victimBoid === explosion boid
-          if (dist > 0 && dist < explosionRadius + explosionBoid.radius + victimBoid.radius) {
-            // Calculate normal vector n from explosionBoid to victim
-            n = n.normalized();
-
-            // Add (explosionRadius / dist )*state.explosionIntensity * dot(v2, n)*(n) to the other boid's acceleration. v2 is the other boid's velocity.
-            //console.log(explosionIntensity);
-            victimBoid.acceleration = victimBoid.acceleration.add(n.scale((explosionRadius / dist ) * explosionIntensity)).add(n.scale(Math.abs(n.dot(victimBoid.velocity))));
-          }
+          // Add (explosionRadius / dist )*state.explosionIntensity * dot(v2, n)*(n) to the other boid's acceleration. v2 is the other boid's velocity.
+          //console.log(explosionIntensity);
+          victimBoid.acceleration = victimBoid.acceleration.add(n.scale((explosionRadius / dist ) * explosionIntensity)).add(n.scale(Math.abs(n.dot(victimBoid.velocity))));
         }
       }
     }
-    
+  }
+
+  generateExplosions() {
+    const randomBoidIndices = getRandom(this._boids, this._state.getState("explosionsPerTick")).map(boid => boid.id);
+    const explosionProb = this.getState("explosionProb");
+    let explodionIndices = [];
+
+    for (const boid of this._boids) {
+      if (randomBoidIndices.includes(boid.id) && Math.random() < explosionProb) {
+        boid.exploded = true;
+        explodionIndices.push(boid.id);
+      } else {
+        boid.exploded = false;
+      }
+    }
+    return explodionIndices;
   }
 
   serializedWorldState() {
@@ -455,48 +497,25 @@ class BoidWorld {
   }
 
   mergeBoids(updatedBoids) {
-    
-    for (let i=0; i < updatedBoids.length; i++) {
-      const updatedBoid = updatedBoids[i];
-      const boid = this._boids[i];
-      if (boid.id == updatedBoid.id) {
-        boid.mergeState(updatedBoid);
-      }
+    for (const boid of updatedBoids) {
+      this._boids[boid.id].updateState(boid);
     }
   }
 
-  mergeBoidsJson(boidData) {
-    mergeBoids(JSON.parse(boidData));
+  mergeBoidsJson(jsonStr) {
+    this.mergeBoids(JSON.parse(jsonStr));
   }
 
-  updateForces(boidData) {
-    const updatedBoids = JSON.parse(boidData);
-
-    for (const updatedBoid of updatedBoids) {
-      this._boids[updatedBoid.id].mergeState(updatedBoid);
-    }
+  applyForcesJson(jsonStr) {
+    this.applyForces(JSON.parse(jsonStr));
   }
 
-  applyForces(boidData) {
-    const updatedBoids = JSON.parse(boidData);
-
+  applyForces(updatedBoids) {
     for (const updatedBoid of updatedBoids) {
       this._boids[updatedBoid.id].setAcceleration(updatedBoid);
-      this._boids[updatedBoid.id].tick(this._state.getState("bounds"));
     }
   }
 
-  resetForces() {
-    this._boids.forEach(boid => {
-      boid.setAcceleration({
-        acceleration: {
-          x: 0.0,
-          y: 0.0
-        }})
-    });
-  }
-
-  // Directly apply boid positions to a planner BoidWorld
   applyPositions(boidData) {
     const updatedBoids = JSON.parse(boidData);
 

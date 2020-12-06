@@ -45,20 +45,13 @@ class Boid {
     return this.x >= bounds.x[0] && this.x <= bounds.x[1] && this.y >= bounds.y[0] && this.y <= bounds.y[1];
   }
 
-  mergeState(state) {
-  //   this.position.x = state.position.x;
-  //   this.position.y = state.position.y;
-
-  //   this.velocity.x = state.velocity.x;
-  //   this.velocity.y = state.velocity.y;
-
-  //   this.acceleration.x = state.acceleration.x;
-  //   this.acceleration.y = state.acceleration.y;
-    this.acceleration = this.acceleration.add(new Vector2D(state.acceleration.x, state.acceleration.y))
-
-    // only overwrite if true
-    this.collided = this.collided ? this.collided : state.collided;
-    this.exploded = this.exploded ? this.exploded : state.exploded;
+  updateState(anotherBoid) {
+    this.x = anotherBoid.position.x;
+    this.y = anotherBoid.position.y;
+    this.velocity.x = anotherBoid.velocity.x;
+    this.velocity.y = anotherBoid.velocity.y;
+    this.collided = anotherBoid.collided;
+    this.exploded = anotherBoid.exploded;
   }
 
   setAcceleration(state) {

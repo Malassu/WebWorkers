@@ -126,18 +126,22 @@ class SimpleWorkerPlanner {
     this.tickStart = performance.now();
     this.workerTimeStamps = [];
 
-    // TODO: precompute explosions
+    // Precompute exploding boids by setting explosion flags
+    const explodionIndices = this.simulation.generateExplosions();
     // Split the workload among workers
     const numOfBoids = this.simulation.getState("numOfBoids");
     const chunkSize = Math.round(numOfBoids/this.workerCount);
     this.workers.forEach((worker, i) => {
       const start = i*chunkSize;
       const end = (i === this.workerCount-1) ? numOfBoids : start + chunkSize;
-      worker.postMessage({msg: 'worker-tick-json', start, end});
+      worker.postMessage({msg: 'worker-tick-json', start, end, explodionIndices});
     });
   }
 
   handleMessageFromWorker(index, e) {
+    // 1. Catch the resulting forces of worker ticks.
+    //    This data includes only the boids that were mutated during worker tick,
+    //    i.e. the workload.
 
     switch (e.data.msg) {
       case 'ticked-shared-binary':
@@ -163,12 +167,11 @@ class SimpleWorkerPlanner {
         }
         return;
 
-      case 'planner-merge':
+      case 'planner-json-merge':
         this.tickedWorkerCount++;
         this.workerTimeStamps = this.workerTimeStamps.concat((({ tickTime, allTime }) => ({ tickTime, allTime }))(e.data));
-  
-        // Keep track of computed forces in the main simulation
-        this.simulation.updateForces(e.data.boids);
+
+        this.simulation.mergeBoidsJson(e.data.boids);
   
         // 2. When all workers have ticked,
         //    send merged forces to each worker for computing new postions.
@@ -176,24 +179,19 @@ class SimpleWorkerPlanner {
           this.tickedWorkerCount = 0;
           const boidsJson = this.simulation.boidsToJson();
           this.workers.forEach(worker => {
-            worker.postMessage({msg: 'worker-move', boids: boidsJson})
+            worker.postMessage({msg: 'worker-json-merge', boids: boidsJson})
           });
-          // Reset forces in the main simulation
-          this.simulation.resetForces();
-          // this.simulation.move();
         }
+        return;
 
       // 3. Catch updated subworker simulations
-      case 'planner-move':
+      case 'planner-json-merged':
         this.movedWorkerCount++;
-
-        // Apply new positions from the last returning worker to the main simulation
         if (this.movedWorkerCount === this.workerCount) {
-          this.movedWorkerCount = 0;
-          // const boids = e.data.boids;
-          this.simulation.applyPositions(e.data.boids);
+          this.movedWorkerCount = 0;          
           this.readyForNextTick = true;
         }
+        return;
   
       default:
         return;

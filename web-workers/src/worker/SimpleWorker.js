@@ -24,21 +24,19 @@ self.onmessage = function(e) {
 
       // Compute a local tick
       const startTimeTick = performance.now();
-      self._localSimulation.tick(start, end);
+      self._localSimulation.tick(start, end, e.data.explodionIndices);
       const tickTime = performance.now() - startTimeTick;
 
       // Post updated local state to main thread
       const boids = self._localSimulation.boidsToJson(start, end);
-      postMessage({msg: 'planner-merge', start, end, boids, tickTime, allTime: performance.now() - startTimeAll });
+      postMessage({msg: 'planner-json-merge', start, end, boids, tickTime, allTime: performance.now() - startTimeAll });
       return;
 
-    case 'worker-move':
-      // Apply forces from the main simulation in order to compute new positions.
-      self._localSimulation.applyForces(e.data.boids);
-      postMessage({msg: 'planner-move', boids: self._localSimulation.boidsToJson()});
-      // postMessage({msg: 'planner-move'});
+    case 'worker-json-merge':
+      self._localSimulation.mergeBoidsJson(e.data.boids);
+      postMessage({ msg: 'planner-json-merged' });
       return;
-    
+
     case 'worker-tick-shared-binary':
       // If boids are added dynamically, the binary buffer needs to be updated.
       self._localSimulation.updateBuffer();

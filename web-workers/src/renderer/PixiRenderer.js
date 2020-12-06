@@ -1,13 +1,13 @@
 import * as PIXI from "pixi.js-legacy";
 
 class PixiRenderer {
-  constructor(simulation) {
+  constructor(config) {
 
     this.image = "images/blue_ball_small.png";
     this.balls = [];
-    this._simulation = simulation;
-    this.width = this._simulation.getState('bounds').x[1];
-    this.height = this._simulation.getState('bounds').y[1];
+    this.width = config.width;
+    this.height = config.height;
+    this.numOfBoids = config.numOfBoids;
 
     // PIXI setup
     let type = "WebGL";
@@ -26,12 +26,12 @@ class PixiRenderer {
 
     // Set collision texture
     this.colors = ['FF0000', 'F5161B', 'EC2C37', 'E24253', 'D9586F', 'CF6E8A', 'C684A6', 'BC9AC2', 'B3B0DE', 'AAC7FA'];
-    this.radius = this._simulation.getState('boidRadius');
+    this.radius = config.boidRadius;
     this.animationSpeed = 0.5; // default 1, higher is faster
     this.textureArray = this.getCollisionTexture(this.colors, this.radius);
 
     // Set explosion texture
-    const explosionRadius = this._simulation.getState('explosionRadius')
+    const explosionRadius = config.explosionRadius;
     this.explosionTexture = this.getExplosionTexture(explosionRadius);
 
     // load
@@ -77,10 +77,10 @@ class PixiRenderer {
   }
 
   init() {
-    this._simulation.boids.forEach(() => {
+    for (let i=0; i<this.numOfBoids; i++) {
       this.addSprite();
-    });
-    this.render();
+    }
+    this.render([])
   }
 
   addSprites(amount) {
@@ -118,12 +118,13 @@ class PixiRenderer {
     
   }
 
-  render() {
-    this._simulation.boids.forEach((boid, i) => {
+  render(boids) {
+    console.log("TEST RENDER")
+    boids.forEach((boid, i) => {
       if (this.balls[i] !== undefined) {
         let sprite = this.balls[i];
-        let x = boid["position"]["components"]["x"];
-        let y = boid["position"]["components"]["y"];
+        let x = boid["position"]["x"];
+        let y = boid["position"]["y"];
         sprite.position.set(x, y);
         
         // play animations
