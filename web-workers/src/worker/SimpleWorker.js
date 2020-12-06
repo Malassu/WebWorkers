@@ -26,9 +26,10 @@ self.onmessage = function(e) {
     const mutatedBoids = self._localSimulation.boidsToJson(start, end);
     // self._localSimulation.move();
     postMessage({msg: 'planner-merge', start, end, boids: mutatedBoids, tickTime, allTime: performance.now() - startTimeAll });
-  } else if (e.data.msg === 'worker-merge') {
-    self._localSimulation.mergeBoids(e.data.boids);
   } else if (e.data.msg === 'worker-move') {
-    self._localSimulation.move();
+    // Apply forces from the main simulation in order to compute new positions.
+    self._localSimulation.applyForces(e.data.boids);
+    postMessage({msg: 'planner-move', boids: self._localSimulation.boidsToJson()});
+    // postMessage({msg: 'planner-move'});
   }
 }

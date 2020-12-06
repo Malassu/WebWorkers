@@ -11,7 +11,7 @@ class App {
     this.workerCount = 2;
 
     this.config = {
-      numOfBoids: 1000,
+      numOfBoids: 4000,
       bounds: {
         x: [0, this.width],
         y: [0, this.height]

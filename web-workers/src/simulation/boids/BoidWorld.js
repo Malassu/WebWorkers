@@ -3,6 +3,11 @@ import Boid from "./Boid.js";
 import Grid from "../grid/Grid.js";
 import { getRandom2D, Vector2D } from "../../utils/vectors.js";
 
+const BOID_RENDER_STATE = ["position", "collided", "exploded"];
+const BOID_FORCE_STATE = ["acceleration", "collided", "exploded"];
+const BOID_MOVE_STATE = ["acceleration"];
+
+
 // https://stackoverflow.com/questions/19269545/how-to-get-a-number-of-random-elements-from-an-array
 function getRandom(arr, n) {
   var result = new Array(n),
@@ -69,11 +74,6 @@ class BoidWorld {
       if (this._state.getState(rule))
         this[`_${ rule }`](start, end);
     });
-
-    for (let i=0; i<this._boids.length; i++) {
-      this._boids[i].tick(this._state.getState("bounds"));
-    }
-    // this.updateGrid();
   }
 
   // Calculate new boid positions based on simulated forces
@@ -85,44 +85,44 @@ class BoidWorld {
   //   this.updateGrid();
   // }
 
-  updateGrid() {
+  // updateGrid() {
 
-    // Find fitting leaf
-    this._boids.forEach(boid => this._grid.findFittingLeaf(boid))
+  //   // Find fitting leaf
+  //   this._boids.forEach(boid => this._grid.findFittingLeaf(boid));
 
-    const elementLimit = this.getState("gridElementLimit");
+  //   const elementLimit = this.getState("gridElementLimit");
 
-    // Separate leaf nodes to the ones that require subdivison and the ones that don't.
-    let leafNodes = this._grid.leafNodes.reduce((acc, curr) => {
-      if (curr.checkSubdivide(elementLimit)) {
-        acc.subdivide.push(curr);
-      }
-      else {
-        acc.others.push(curr);
-      }
+  //   // Separate leaf nodes to the ones that require subdivison and the ones that don't.
+  //   let leafNodes = this._grid.leafNodes.reduce((acc, curr) => {
+  //     if (curr.checkSubdivide(elementLimit)) {
+  //       acc.subdivide.push(curr);
+  //     }
+  //     else {
+  //       acc.others.push(curr);
+  //     }
 
-      return acc;
-    }, {
-      subdivide: [],
-      others: [] 
-    });
+  //     return acc;
+  //   }, {
+  //     subdivide: [],
+  //     others: [] 
+  //   });
 
-    leafNodes.subdivide.map(grid => grid.subdivide(elementLimit));
+  //   leafNodes.subdivide.map(grid => grid.subdivide(elementLimit));
 
-    // Now consider grids that might need to be unsubdivided
-    leafNodes = leafNodes.others;
+  //   // Now consider grids that might need to be unsubdivided
+  //   leafNodes = leafNodes.others;
 
-    while (true) {
-      leafNodes = leafNodes.map(node => node.parent).filter(parent => parent.checkUnsubdivide(elementLimit));
+  //   while (true) {
+  //     leafNodes = leafNodes.map(node => node.parent).filter(parent => parent.checkUnsubdivide(elementLimit));
 
-      if (leafNodes.length) {
-        leafNodes.map(node => node.unsubdivide());
-      }
-      else {
-        break;
-      }
-    }
-  }
+  //     if (leafNodes.length) {
+  //       leafNodes.map(node => node.unsubdivide());
+  //     }
+  //     else {
+  //       break;
+  //     }
+  //   }
+  // }
 
   addBoid() {
     this._boids.push(this._generateBoid(true));
@@ -308,14 +308,51 @@ class BoidWorld {
   }
 
   // merge boid acceleration
-  mergeBoids(boidData) {
+  // mergeBoids(boidData) {
+  //   const updatedBoids = JSON.parse(boidData);
+
+  //   for (const updatedBoid of updatedBoids) {
+  //     this._boids[updatedBoid.id].mergeState(updatedBoid);
+  //   }
+  // }
+
+  updateForces(boidData) {
     const updatedBoids = JSON.parse(boidData);
 
     for (const updatedBoid of updatedBoids) {
-      const boid = this._boids[updatedBoid.id];
       this._boids[updatedBoid.id].mergeState(updatedBoid);
     }
   }
+
+  applyForces(boidData) {
+    const updatedBoids = JSON.parse(boidData);
+
+    for (const updatedBoid of updatedBoids) {
+      this._boids[updatedBoid.id].setAcceleration(updatedBoid);
+      this._boids[updatedBoid.id].tick(this._state.getState("bounds"));
+    }
+  }
+
+  resetForces() {
+    this._boids.forEach(boid => {
+      boid.setAcceleration({
+        acceleration: {
+          x: 0.0,
+          y: 0.0
+        }})
+    });
+  }
+
+  // Directly apply boid positions to a planner BoidWorld
+  applyPositions(boidData) {
+    const updatedBoids = JSON.parse(boidData);
+
+    for (const updatedBoid of updatedBoids) {
+      this._boids[updatedBoid.id].x = updatedBoid.position.x;
+      this._boids[updatedBoid.id].y = updatedBoid.position.y;
+    }
+  }
+
 };
 
 export default BoidWorld;
