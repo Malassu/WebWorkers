@@ -72,14 +72,15 @@ class SimpleWorkerPlanner {
     this.tickStart = performance.now();
     this.workerTimeStamps = [];
 
-    // TODO: precompute explosions
+    // Precompute exploding boids by setting explosion flags
+    const explodionIndices = this.simulation.generateExplosions();
     // Split the workload among workers
     const numOfBoids = this.simulation.getState("numOfBoids");
     const chunkSize = Math.round(numOfBoids/this.workerCount);
     this.workers.forEach((worker, i) => {
       const start = i*chunkSize;
       const end = (i === this.workerCount-1) ? numOfBoids : start + chunkSize;
-      worker.postMessage({msg: 'worker-tick', start, end});
+      worker.postMessage({msg: 'worker-tick', start, end, explodionIndices});
     });
   }
 
@@ -91,8 +92,12 @@ class SimpleWorkerPlanner {
       this.tickedWorkerCount++;
       this.workerTimeStamps = this.workerTimeStamps.concat((({ tickTime, allTime }) => ({ tickTime, allTime }))(e.data));
 
-      // Keep track of computed forces in the main simulation
-      this.simulation.updateForces(e.data.boids);
+      // Merge sub workers
+      this.workers.forEach((worker, workerIndex) => {
+        if (index != workerIndex) {
+          worker.postMessage({msg: 'worker-merge', boids: e.data.boids});
+        }
+      });
 
       // 2. When all workers have ticked,
       //    send merged forces to each worker for computing new postions.
@@ -102,9 +107,6 @@ class SimpleWorkerPlanner {
         this.workers.forEach(worker => {
           worker.postMessage({msg: 'worker-move', boids: boidsJson})
         });
-        // Reset forces in the main simulation
-        this.simulation.resetForces();
-        // this.simulation.move();
       }
     }
 

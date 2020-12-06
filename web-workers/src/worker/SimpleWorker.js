@@ -20,15 +20,17 @@ self.onmessage = function(e) {
     const end = e.data.end;
     // Compute a local tick
     const startTimeTick = performance.now();
-    self._localSimulation.tick(start, end);
+    self._localSimulation.tick(start, end, e.data.explodionIndices);
     const tickTime = performance.now() - startTimeTick;
     // Post updated local state to main thread
     const mutatedBoids = self._localSimulation.boidsToJson(start, end);
     // self._localSimulation.move();
     postMessage({msg: 'planner-merge', start, end, boids: mutatedBoids, tickTime, allTime: performance.now() - startTimeAll });
+  } else if (e.data.msg === 'worker-merge') {
+    self._localSimulation.applyForces(e.data.boids);
   } else if (e.data.msg === 'worker-move') {
     // Apply forces from the main simulation in order to compute new positions.
-    self._localSimulation.applyForces(e.data.boids);
+    self._localSimulation.move();
     postMessage({msg: 'planner-move', boids: self._localSimulation.boidsToJson()});
     // postMessage({msg: 'planner-move'});
   }
