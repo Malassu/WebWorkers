@@ -50,18 +50,18 @@ self.onmessage = function(e) {
       const tickTimeShared = performance.now() - startTimeTickShared;
 
       // Post updated local state to main thread
-      postMessage({msg: 'ticked-shared-binary', start: e.data.start, end: e.data.end, tickTime: tickTimeShared, allTime: performance.now() - startTimeAllShared});
+      postMessage({msg: 'ticked-shared-binary', tickTime: tickTimeShared, allTime: performance.now() - startTimeAllShared});
       return;
 
     case 'worker-shared-binary-merge':
-        self._localSimulation.boidsToBinary(e.data.start, e.data.end);
+      self._localSimulation.boidsToBinary(e.data.start, e.data.end);
 
-        postMessage({ msg: 'planner-shared-binary-merged' });
-        return;
+      postMessage({ msg: 'planner-shared-binary-merged' });
+      return;
 
     case 'tick-transferable-binary':
       // Compute a local tick
-      self._localSimulation.tick();
+      self._localSimulation.tick(e.data.start, e.data.end, e.data.explodionIndices);
 
       // Post updated local state to main thread
       // NOTE: the function writeBoidsToTransferable returns the required transferable list https://developers.google.com/web/updates/2011/12/Transferable-Objects-Lightning-Fast
@@ -69,8 +69,12 @@ self.onmessage = function(e) {
       postMessage({ ...e.data, msg: "ticked-transferable-binary" }, self._localSimulation.writeBoidsToTransferable(e.data));        
       // If boids are added dynamically, the binary buffer needs to be updated.
       // NOTE: Update done using shared buffer for convinience.
-      self._localSimulation.updateBuffer();
+      self._localSimulation.updateBuffer();  
       return;
+
+      case 'worker-merge-transferable-binary':  
+        postMessage({ ...e.data, msg: 'planner-merged-transferable-binary' }, self._localSimulation.mergeTransferables(e.data));
+        return;
 
       case 'update-buffer':
         self._localSimulation.queueBuffer(e.data.buf);

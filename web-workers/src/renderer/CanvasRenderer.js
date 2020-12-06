@@ -16,7 +16,7 @@ class CanvasRenderer {
       let x = boid["position"]["x"];
       let y = boid["position"]["y"];
       const circle = new Path2D();
-      circle.arc(x, y, 10, 0, 2 * Math.PI);
+      circle.arc(x, y, 5, 0, 2 * Math.PI);
       this.ctx.fill(circle);
     });
   }

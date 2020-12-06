@@ -140,7 +140,7 @@ class BinaryBoidParser {
     });
 
 
-    const sliceLength = Math.floor(boids.length / numOfSlices);
+    const sliceLength = Math.round(boids.length / numOfSlices);
 
     const result = [];
 

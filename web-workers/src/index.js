@@ -16,7 +16,7 @@ window.onload = () => {
     const avgTickElement = document.querySelector("#avgTick");
     const timeTookElement = document.querySelector("#timeTook");
 
-    timeTookElement.innerHTML = Math.round(1 / timeTook * 100000) / 100;
+    timeTookElement.innerHTML = Math.round(1 / parallelTick * 100000) / 100;
     parallelTickElement.innerHTML = parallelTick;
     avgEntireWorkerElement.innerHTML = workers.reduce((acc, curr) => acc + curr.allTime, 0) / workers.length;
     avgTickElement.innerHTML = workers.reduce((acc, curr) => acc + curr.tickTime, 0) / workers.length;

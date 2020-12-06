@@ -1,6 +1,7 @@
 
 import Worker from "worker-loader!./SimpleWorker.js";
 import BoidWorld from '../simulation/boids/BoidWorld.js';
+import { userInfo } from "os";
 
 class SimpleWorkerPlanner {
   constructor() {
@@ -22,13 +23,19 @@ class SimpleWorkerPlanner {
   create(workerCount, config) {
     this.simulation = new BoidWorld(config);
 
-    this.transferableArrays = this.simulation.transferableBoidArrays;
+    this.transferableArrays = this.simulation.getTransferableBoidArrays(workerCount);
+
 
     this.tickStart = null;
     this.workerTimeStamps = [];
 
     this.workerCount = workerCount;
     this.readyForNextTick = true;
+
+    postMessage({
+      msg: 'shared-buffer',
+      sharedBuffer: this.simulation.binaryBuffer
+    });
 
     // Create sub workers
     for (let i=0; i < this.workerCount; i++) {
@@ -64,14 +71,12 @@ class SimpleWorkerPlanner {
 
   }
 
-
-  updateTransferables({ msg, index, ...rest }) {
+  // Take out values that are not transferable
+  updateTransferables({ msg, index, explodionIndices, start, end, pass, ...rest }) {
     this.transferableArrays[index] = rest;
   }
 
   parallelTickSharedBinary() {
-    this.tickStart = performance.now();
-    this.workerTimeStamps = [];
     const explodionIndices = this.simulation.generateExplosions();
     // Split the workload among workers
     const numOfBoids = this.simulation.getState("numOfBoids");
@@ -84,9 +89,30 @@ class SimpleWorkerPlanner {
   }
 
   parallelTickTransferableBinary() {
+    const explodionIndices = this.simulation.generateExplosions();
+    const numOfBoids = this.simulation.getState("numOfBoids");
+    const chunkSize = Math.round(numOfBoids/this.workerCount);
+
     this.workers.forEach((worker, index) => {
-      worker.postMessage({ msg: 'tick-transferable-binary', index, ...this.transferableArrays[index]}, Object.values(this.transferableArrays[index]));
+      const start = index*chunkSize;
+      const end = (index === this.workerCount-1) ? numOfBoids : start + chunkSize;
+      
+      worker.postMessage({ msg: 'tick-transferable-binary', explodionIndices, start, index, end, ...this.transferableArrays[index]}, Object.values(this.transferableArrays[index]));
     })
+  }
+
+  parallelTickJson() {
+    // Precompute exploding boids by setting explosion flags
+    const explodionIndices = this.simulation.generateExplosions();
+    // Split the workload among workers
+    const numOfBoids = this.simulation.getState("numOfBoids");
+    const chunkSize = Math.round(numOfBoids/this.workerCount);
+    this.workers.forEach((worker, i) => {
+      const start = i*chunkSize;
+      const end = (i === this.workerCount-1) ? numOfBoids : start + chunkSize;
+  
+      worker.postMessage({msg: 'worker-tick-json', start, end, explodionIndices});
+    });
   }
 
   updateBuffers() {
@@ -112,31 +138,19 @@ class SimpleWorkerPlanner {
           msg: 'main-render',
           boids: this.simulation.boidsToJson(),
           timeStamps: {
-            parallelTick: performance.now() - this.tickStart,
+            parallelTick: this.tickStart,
             workers: this.workerTimeStamps
           }
         });
         
-        this.parallelTickSharedBinary();
+        this.tickStart = performance.now();
+        this.workerTimeStamps = [];
+
+
+        this.parallelTickTransferableBinary();
         this.readyForNextTick = false;
       }
     }, 16);
-  }
-
-  parallelTickJson() {
-    this.tickStart = performance.now();
-    this.workerTimeStamps = [];
-
-    // Precompute exploding boids by setting explosion flags
-    const explodionIndices = this.simulation.generateExplosions();
-    // Split the workload among workers
-    const numOfBoids = this.simulation.getState("numOfBoids");
-    const chunkSize = Math.round(numOfBoids/this.workerCount);
-    this.workers.forEach((worker, i) => {
-      const start = i*chunkSize;
-      const end = (i === this.workerCount-1) ? numOfBoids : start + chunkSize;
-      worker.postMessage({msg: 'worker-tick-json', start, end, explodionIndices});
-    });
   }
 
   handleMessageFromWorker(index, e) {
@@ -145,18 +159,6 @@ class SimpleWorkerPlanner {
     //    i.e. the workload.
 
     switch (e.data.msg) {
-      case 'ticked-transferable-binary':
-        this.tickedWorkerCount++;
-        this.simulation.mergeTransferables(e.data);
-        this.updateTransferables(e.data);
-        // merge worker states to main simulation when all workers have ticked
-        if (this.tickedWorkerCount === this.workerCount) {
-          // reset ticked count and request next tick
-          this.nextTickCallback();
-          this.tickedWorkerCount = 0;
-        }
-        return;
-
       case 'planner-json-merge':
         this.tickedWorkerCount++;
         this.workerTimeStamps = this.workerTimeStamps.concat((({ tickTime, allTime }) => ({ tickTime, allTime }))(e.data));
@@ -178,6 +180,7 @@ class SimpleWorkerPlanner {
       case 'planner-json-merged':
         this.movedWorkerCount++;
         if (this.movedWorkerCount === this.workerCount) {
+          this.tickStart = performance.now() - this.tickStart;
           this.movedWorkerCount = 0;          
           this.readyForNextTick = true;
         }
@@ -207,11 +210,54 @@ class SimpleWorkerPlanner {
         if (this.tickedWorkerCount === this.workerCount) {
           this.simulation.boidsFromBinary();
           // reset ticked count and request next tick
+          this.tickStart = performance.now() - this.tickStart;
           this.tickedWorkerCount = 0;
           this.readyForNextTick = true;
         }
         return;        
+      
+      case 'ticked-transferable-binary':
+        this.tickedWorkerCount++;
+        this.simulation.mergeTransferables(e.data);
   
+        this.updateTransferables(e.data);
+
+        // merge worker states to main simulation when all workers have ticked
+        if (this.tickedWorkerCount === this.workerCount) {
+          // reset ticked count and request next tick
+          this.tickedWorkerCount = 0;
+
+          this.workers.forEach((worker, i) => {
+            // Pass each worker the transferables associated with the next worker.
+            const index = (i + 1) % this.workerCount;
+            //NOTE: keep track of the tranferable's index so that the next transferable can be sent.
+            worker.postMessage({ msg: 'worker-merge-transferable-binary', pass: 1, index, ...this.transferableArrays[index]}, Object.values(this.transferableArrays[index]));
+          });
+        }
+        return;
+
+        case 'planner-merged-transferable-binary':
+          this.tickedWorkerCount++;
+          this.updateTransferables(e.data);                
+
+          // merge worker states to main simulation when all workers have ticked
+          if (this.tickedWorkerCount % this.workerCount === 0) {
+            if (e.data.pass + 1 === this.workerCount) {
+              this.tickStart = performance.now() - this.tickStart;
+              this.tickedWorkerCount = 0;
+              this.readyForNextTick = true;
+            } 
+            else {
+              this.workers.forEach((worker, i) => {
+                const pass = e.data.pass + 1;
+                const index = (i + pass ) % this.workerCount;
+                
+                worker.postMessage({ msg: 'worker-merge-transferable-binary', pass, index, ...this.transferableArrays[index]}, Object.values(this.transferableArrays[index]));
+              });
+            }
+          }
+          return;
+
       default:
         return;
     }

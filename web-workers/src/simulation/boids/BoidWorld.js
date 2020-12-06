@@ -78,7 +78,9 @@ class BoidWorld {
   tick(start=0, end=this._boids.length, explosionIndices=this.generateExplosions()) {
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
 
-    this._boids.map(boid => boid.collided = false);
+    for (let boid of this.boids) {
+      boid.collided = false;
+    }
 
     // Apply behavior forces
     ["bounded", "collision", "explosion"].map(rule => {
@@ -421,8 +423,8 @@ class BoidWorld {
     this._binaryParser.buffer = buffer;
   } 
 
-  get transferableBoidArrays() {
-    return BinaryBoidParser.arraysFromBoids(this._boids);
+  getTransferableBoidArrays(numOfSlices) {
+    return BinaryBoidParser.arraysFromBoids(this._boids, numOfSlices);
   }
 
   writeBoidsToTransferable(data) {
@@ -433,16 +435,13 @@ class BoidWorld {
     } = BinaryBoidParser.arraysFromBuffers(data);
 
     for (let index = 0; index < idArray.length; index++) {
-      const boid = this._boids[idArray[index] - 1];
+      const boid = this._boids[idArray[index]];
 
-      pXArray[boid.id] = boid.x;
-      pYArray[boid.id] = boid.y;
-      vXArray[boid.id] = boid.velocity.x;
-      vYArray[boid.id] = boid.velocity.y;
-      aXArray[boid.id] = boid.acceleration.x;
-      aYArray[boid.id] = boid.acceleration.y;
-      colArray[boid.id] = boid.collided;
-      expArray[boid.id] = boid.exploded;
+      pXArray[index] = boid.x;
+      pYArray[index] = boid.y;
+      vXArray[index] = boid.velocity.x;
+      vYArray[index] = boid.velocity.y;
+      colArray[index] = boid.collided;
     }
 
     return [ 
@@ -457,8 +456,9 @@ class BoidWorld {
       rArray, maxSArray, idArray, colArray, expArray
     } = BinaryBoidParser.arraysFromBuffers(data);
 
+
     for (let index = 0; index < idArray.length; index++) {
-      const boid = this._boids[idArray[index] - 1];
+      const boid = this._boids[idArray[index]];
 
       boid.x = pXArray[index];
       boid.y = pYArray[index];
@@ -469,6 +469,11 @@ class BoidWorld {
       boid.collided = colArray[index];
       boid.exploded = expArray[index];
     }
+
+    return [ 
+      pXArray.buffer, pYArray.buffer, vXArray.buffer, vYArray.buffer, aXArray.buffer, aYArray.buffer, 
+      rArray.buffer, maxSArray.buffer, idArray.buffer, colArray.buffer, expArray.buffer
+    ];
   }
 
   // TODO: Allow partial update based on intervals.
