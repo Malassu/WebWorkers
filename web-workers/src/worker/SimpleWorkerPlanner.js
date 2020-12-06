@@ -51,17 +51,17 @@ class SimpleWorkerPlanner {
 
   // Update boid data for rendering
   loop() {
-    setInterval(() => {
-      postMessage({
-        msg: 'main-render',
-        boids: this.simulation.boidsToJson(),
-        timeStamps: {
-          parallelTick: performance.now() - this.tickStart,
-          workers: this.workerTimeStamps
-        }
-      });
-
+    this.timer = setInterval(() => {
       if (this.readyForNextTick) {
+        postMessage({
+          msg: 'main-render',
+          boids: this.simulation.boidsToJson(),
+          timeStamps: {
+            parallelTick: performance.now() - this.tickStart,
+            workers: this.workerTimeStamps
+          }
+        });
+        
         this.parallelTick();
         this.readyForNextTick = false;
       }

@@ -8,7 +8,7 @@ class App {
     // BoidWorld setup
     this.width = 1800;
     this.height = 900;
-    this.workerCount = 2;
+    this.workerCount = 4;
 
     this.config = {
       numOfBoids: 4000,
@@ -54,6 +54,7 @@ class App {
 
   start() {
     this._planner.postMessage({msg: 'planner-start'});
+    this.renderTimeStamp = performance.now();
   }
 
   addBoids(amount) {
@@ -69,12 +70,15 @@ class App {
 
   handleMessageFromPlanner(e) {
     if (e.data.msg == 'main-render') {
+
       const boids = JSON.parse(e.data.boids);
       
       this._renderer.render(boids);
 
-      
-      this.emit("simulation-timestamps", e.data.timeStamps);
+      const timeTook = performance.now() - this.renderTimeStamp;
+
+      this.renderTimeStamp = performance.now();
+      this.emit("simulation-timestamps", { ...e.data.timeStamps, timeTook });
     }
   }
 }
