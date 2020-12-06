@@ -1,37 +1,51 @@
 
 import Worker from "worker-loader!./SimpleWorker.js";
+import BoidWorld from '../simulation/boids/BoidWorld.js';
 
 class SimpleWorkerPlanner {
-  constructor(simulation, workerCount = 1, nextTickCallback) {
-    this.simulation = simulation;
-    this.workerCount = workerCount;
+  constructor() {
+    this.simulation = null;
+    this.workerCount = null;
+    this.readyForNextTick = null;
     this.workers = [];
     this.tickedWorkerCount = 0;
     this.transferableArrays = this.simulation.transferableBoidArrays;
 
-    // callback to request next tick from the application
-    this.nextTickCallback = nextTickCallback;
+    this.movedWorkerCount = 0;
+
+    this.forces = [];
     
+    // callback to request next tick from the application
+    // this.nextTickCallback = nextTickCallback;
+  }
+  
+  // Create BoidWorld within planner context and initialize workers
+  create(workerCount, config) {
+    this.simulation = new BoidWorld(config);
+
+    this.tickStart = null;
+    this.workerTimeStamps = [];
+
+    this.workerCount = workerCount;
+    this.readyForNextTick = true;
+
+    // Create sub workers
     for (let i=0; i < this.workerCount; i++) {
       // module workers, see https://web.dev/module-workers/
       this.workers.push(new Worker({ type:"module" }));
     }
 
     // add onmessage handlers to catch messages that are passed back from the workers
-    this.workers.forEach((worker) => {
-      worker.addEventListener('message', this.handleMessageFromWorker.bind(this));
+    this.workers.forEach((worker, index) => {
+      worker.addEventListener('message', this.handleMessageFromWorker.bind(this, index));
     })
-  }
-  
-  // initialize workers
-  init() {
+
     // Pass initial state to workers
     const serialized = this.simulation.serializedWorldState();
-    this.workers.forEach((worker) => {
     
     const message = {
-      msg: 'init',
-      serialized 
+      msg: 'worker-init',
+      serialized
     };
 
     if (crossOriginIsolated) {
@@ -40,16 +54,19 @@ class SimpleWorkerPlanner {
     }
     else {
       console.log("Shared data is not supported.");
+      message.boids = this.simulation.boidsToJson();
     }
 
+    this.workers.forEach((worker) => {
       worker.postMessage(message);
-    })
+    });
   }
-  
+
+
   updateTransferables({ msg, index, ...rest }) {
     this.transferableArrays[index] = rest;
   }
-  
+
   parallelTickSharedBinary() {
     this.workers.forEach((worker) => {
       worker.postMessage({ msg: 'tick-shared-binary' });
@@ -85,6 +102,40 @@ class SimpleWorkerPlanner {
       this.transferableArrays = this.simulation.transferableBoidArrays;
   }
 
+  // Update boid data for rendering
+  loop() {
+    this.timer = setInterval(() => {
+      if (this.readyForNextTick) {
+        postMessage({
+          msg: 'main-render',
+          boids: this.simulation.boidsToJson(),
+          timeStamps: {
+            parallelTick: performance.now() - this.tickStart,
+            workers: this.workerTimeStamps
+          }
+        });
+        
+        this.parallelTick();
+        this.readyForNextTick = false;
+      }
+    }, 33);
+  }
+
+  parallelTickJson() {
+    this.tickStart = performance.now();
+    this.workerTimeStamps = [];
+
+    // TODO: precompute explosions
+    // Split the workload among workers
+    const numOfBoids = this.simulation.getState("numOfBoids");
+    const chunkSize = Math.round(numOfBoids/this.workerCount);
+    this.workers.forEach((worker, i) => {
+      const start = i*chunkSize;
+      const end = (i === this.workerCount-1) ? numOfBoids : start + chunkSize;
+      worker.postMessage({msg: 'worker-tick-json', start, end});
+    });
+  }
+
   handleMessageFromWorker(e) {
     switch (e.data.msg) {
       case 'ticked-json':
@@ -97,7 +148,7 @@ class SimpleWorkerPlanner {
           this.tickedWorkerCount = 0;
         }
         return;
-
+  
       case 'ticked-shared-binary':
         this.tickedWorkerCount++;
         this.simulation.boidsFromBinary();
@@ -108,23 +159,64 @@ class SimpleWorkerPlanner {
           this.tickedWorkerCount = 0;
         }
         return;
+  
+      case 'ticked-transferable-binary':
+        this.tickedWorkerCount++;
+        this.simulation.mergeTransferables(e.data);
+        this.updateTransferables(e.data);
+        // merge worker states to main simulation when all workers have ticked
+        if (this.tickedWorkerCount === this.workerCount) {
+          // reset ticked count and request next tick
+          this.nextTickCallback();
+          this.tickedWorkerCount = 0;
+        }
+        return;
 
-        case 'ticked-transferable-binary':
-          this.tickedWorkerCount++;
-          this.simulation.mergeTransferables(e.data);
-          this.updateTransferables(e.data);
-          // merge worker states to main simulation when all workers have ticked
-          if (this.tickedWorkerCount === this.workerCount) {
-            // reset ticked count and request next tick
-            this.nextTickCallback();
-            this.tickedWorkerCount = 0;
-          }
-          return;
+      case 'planner-merge':
+        this.tickedWorkerCount++;
+        this.workerTimeStamps = this.workerTimeStamps.concat((({ tickTime, allTime }) => ({ tickTime, allTime }))(e.data));
+  
+        // Keep track of computed forces in the main simulation
+        this.simulation.updateForces(e.data.boids);
+  
+        // 2. When all workers have ticked,
+        //    send merged forces to each worker for computing new postions.
+        if (this.tickedWorkerCount === this.workerCount) {
+          this.tickedWorkerCount = 0;
+          const boidsJson = this.simulation.boidsToJson();
+          this.workers.forEach(worker => {
+            worker.postMessage({msg: 'worker-move', boids: boidsJson})
+          });
+          // Reset forces in the main simulation
+          this.simulation.resetForces();
+          // this.simulation.move();
+        }
 
-        default:
-          return;
+      // 3. Catch updated subworker simulations
+      case 'planner-move':
+        this.movedWorkerCount++;
+
+        // Apply new positions from the last returning worker to the main simulation
+        if (this.movedWorkerCount === this.workerCount) {
+          this.movedWorkerCount = 0;
+          // const boids = e.data.boids;
+          this.simulation.applyPositions(e.data.boids);
+          this.readyForNextTick = true;
+        }
+  
+      default:
+        return;
+    }
+  }
+
+  onMainThreadMessage(e) {
+    if (e.data.msg == 'planner-create') {
+      this.create(e.data.workerCount, e.data.config);
+    } else if (e.data.msg == 'planner-start') {
+      this.loop();
     }
   }
 };
 
-export default SimpleWorkerPlanner;
+const worker = new SimpleWorkerPlanner();
+onmessage = worker.onMainThreadMessage.bind(worker)

@@ -13,7 +13,7 @@ class Boid {
       maxSpeed: 0.01,
       collided: false,
       exploded: false,
-      id: ++idCounter
+      id: idCounter++
     };
 
     this._grid = null;
@@ -46,18 +46,24 @@ class Boid {
   }
 
   mergeState(state) {
-    this.position.x = state.position.x;
-    this.position.y = state.position.y;
+  //   this.position.x = state.position.x;
+  //   this.position.y = state.position.y;
 
-    this.velocity.x = state.velocity.x;
-    this.velocity.y = state.velocity.y;
+  //   this.velocity.x = state.velocity.x;
+  //   this.velocity.y = state.velocity.y;
 
-    this.acceleration.x = state.acceleration.x;
-    this.acceleration.y = state.acceleration.y;
+  //   this.acceleration.x = state.acceleration.x;
+  //   this.acceleration.y = state.acceleration.y;
+    this.acceleration = this.acceleration.add(new Vector2D(state.acceleration.x, state.acceleration.y))
 
     // only overwrite if true
-    this.collided = state.collided;
-    this.exploded = state.exploded;
+    this.collided = this.collided ? this.collided : state.collided;
+    this.exploded = this.exploded ? this.exploded : state.exploded;
+  }
+
+  setAcceleration(state) {
+    this.acceleration.x = state.acceleration.x;
+    this.acceleration.y = state.acceleration.y;
   }
 
   get x() {

@@ -4,6 +4,11 @@ import Grid from "../grid/Grid.js";
 import BinaryBoidParser from "./BinaryBoidParser.js";
 import { getRandom2D, Vector2D } from "../../utils/vectors.js";
 
+const BOID_RENDER_STATE = ["position", "collided", "exploded"];
+const BOID_FORCE_STATE = ["acceleration", "collided", "exploded"];
+const BOID_MOVE_STATE = ["acceleration"];
+
+
 // https://stackoverflow.com/questions/19269545/how-to-get-a-number-of-random-elements-from-an-array
 function getRandom(arr, n) {
   var result = new Array(n),
@@ -42,7 +47,6 @@ class BoidWorld {
     }
 
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
-
   };
 
   // Creates a new boids with random coordinates within bounds.
@@ -50,6 +54,7 @@ class BoidWorld {
     const { x, y } = this._state.getState("bounds");
     const maxSpeed = this.getState("maxSpeed");
 
+    // Generate random vectors if not given
     const position = typeof pos === "undefined" ? getRandom2D(x,y) : new Vector2D(pos.x, pos.y);
     const velocity = typeof vel === "undefined" ? getRandom2D([-maxSpeed, maxSpeed]) : new Vector2D(vel.x, vel.y);
 
@@ -68,25 +73,69 @@ class BoidWorld {
     return boid 
   }
 
-  // Runs next step of the simulation.
-  // TODO: allow ticking partial boids in order to support concurrency
-  tick() {
+  // Runs next step of the simulation by calculating forces affecting a partition of boids
+  tick(start=0, end=this._boids.length) {
+
     // clear behavior status
-    this.boids.forEach((boid) => {
+    this._boids.forEach((boid) => {
       boid.collided = false;
       boid.exploded = false;
     });
 
+    // Apply behavior forces
     ["bounded", "collision", "explosion"].map(rule => {
       if (this._state.getState(rule))
-        this[`_${ rule }`]();
+        this[`_${ rule }`](start, end);
     });
-
-
-    this._boids.map(boid => boid.tick(this._state.getState("bounds")));
-
-    this.gridUpdate();
   }
+
+  // Calculate new boid positions based on simulated forces
+  // move() {
+  //   // Update boid positions
+  //   for (let i=0; i<this._boids.length; i++) {
+  //     this._boids[i].tick(this._state.getState("bounds"));
+  //   }
+  //   this.updateGrid();
+  // }
+
+   updateGrid() {
+
+     // Find fitting leaf
+     this._boids.forEach(boid => this._grid.findFittingLeaf(boid));
+
+     const elementLimit = this.getState("gridElementLimit");
+
+     // Separate leaf nodes to the ones that require subdivison and the ones that don't.
+     let leafNodes = this._grid.leafNodes.reduce((acc, curr) => {
+       if (curr.checkSubdivide(elementLimit)) {
+         acc.subdivide.push(curr);
+       }
+       else {
+         acc.others.push(curr);
+       }
+
+       return acc;
+     }, {
+       subdivide: [],
+       others: [] 
+     });
+
+     leafNodes.subdivide.map(grid => grid.subdivide(elementLimit));
+
+     // Now consider grids that might need to be unsubdivided
+     leafNodes = leafNodes.others;
+
+     while (true) {
+       leafNodes = leafNodes.map(node => node.parent).filter(parent => parent.checkUnsubdivide(elementLimit));
+
+       if (leafNodes.length) {
+         leafNodes.map(node => node.unsubdivide());
+       }
+       else {
+         break;
+       }
+     }
+   }
 
   addBoid() {
     this._boids.push(this._generateBoid(true));
@@ -125,7 +174,7 @@ class BoidWorld {
   // 1. Check if boid is near a boundary
   // 2. If not do nothing
   // 3. If it is then add calculate velocity along the corresponding axis and add -2 times that value to acceleration.
-  _bounded() {
+  _bounded(start, end) {
     const bounds = this._state.getState("bounds");
     
     // Direction indicates wheter the boid is near the minimum border or maximum border.
@@ -140,7 +189,8 @@ class BoidWorld {
       boid.acceleration = boid.acceleration.add(acceleration);
     };
 
-    for (const boid of this._boids) {
+    for (let i=start; i<end; i++) {
+      const boid = this.boids[i];
 
       for (const axis in bounds) {
         if (boid[axis] - boid.radius <= bounds[axis][0]) {
@@ -154,12 +204,11 @@ class BoidWorld {
   }
 
   // Calculate collision forces
-  _collision() {
-    const indices = [ ...this._boids.keys() ];
+  _collision(start, end) {
 
     // Loop over all boids.
-    for (const index1 of indices) {
-      const boid1 = this._boids[index1];
+    for (let i=start; i<end; i++) {
+      const boid1 = this.boids[i];
       // Loop over boids that index1 has not used.
       // This way we can updated both boidi and boidj in one iteration and only do one of the symmetrical cases (boidi -> boidj) and (boidj -> boidi)
       // where (boidi -> boidj) represents boid with index1 = i colliding with boid with index2 = j
@@ -198,15 +247,16 @@ class BoidWorld {
   }
 
   // Calculate explosion forces.
-  _explosion() {
+  _explosion(start, end) {
     // Choose state.explosionsPerTick number of boids.
-    const randomBoids = getRandom(this._boids, this._state.getState("explosionsPerTick"));
+    const randomBoidIndices = getRandom(this._boids.slice(start, end).map(boid => boid.id), this._state.getState("explosionsPerTick"));
     const explosionRadius = this.getState("explosionRadius");
     const explosionIntensity = this.getState("explosionIntesity");
     const explosionProb = this.getState("explosionProb");
 
     // For each boid B:
-    for (const explosionBoid of randomBoids) {
+    for (const explosionIndex of randomBoidIndices) {
+      const explosionBoid = this._boids[explosionIndex];
       if (Math.random() < explosionProb) {
         explosionBoid.exploded = true;
         
@@ -226,7 +276,7 @@ class BoidWorld {
           }
         }
       }
-    } 
+    }
     
   }
 
@@ -255,11 +305,11 @@ class BoidWorld {
   }
 
   boidsFromSerialized(boidData) {
-    const newBoids = Array.from(boidData, ({ position, velocity, id }) => this._generateBoid(false, position, velocity, id));
+    const newBoids = Array.from(boidData, ({ position, velocity, id }) => this._generateBoid(true, position, velocity, id));
     
     // replace boids and create new grid
     this._boids = newBoids;
-    this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
+    this.gridUpdate();
   }
 
   boidsFromJson(jsonStr) {
@@ -393,17 +443,17 @@ class BoidWorld {
     this._binaryParser.update(this._boids);
   }
 
-  get boidsToJson() {
-    return JSON.stringify(this.serializedBoids);
+  boidsToJson(start=0, end=this._boids.length) {
+    return JSON.stringify(this.serializedBoids(start, end));
   }
 
-  get serializedBoids() {
-    return this._boids.map(boid => {
+  
+  serializedBoids(start=0, end=this._boids.length) {
+    return this._boids.slice(start, end).map(boid => {
       return boid.serializedBoid;
     });
   }
 
-  // merge boid acceleration
   mergeBoids(updatedBoids) {
     
     for (let i=0; i < updatedBoids.length; i++) {
@@ -418,6 +468,44 @@ class BoidWorld {
   mergeBoidsJson(boidData) {
     mergeBoids(JSON.parse(boidData));
   }
+
+  updateForces(boidData) {
+    const updatedBoids = JSON.parse(boidData);
+
+    for (const updatedBoid of updatedBoids) {
+      this._boids[updatedBoid.id].mergeState(updatedBoid);
+    }
+  }
+
+  applyForces(boidData) {
+    const updatedBoids = JSON.parse(boidData);
+
+    for (const updatedBoid of updatedBoids) {
+      this._boids[updatedBoid.id].setAcceleration(updatedBoid);
+      this._boids[updatedBoid.id].tick(this._state.getState("bounds"));
+    }
+  }
+
+  resetForces() {
+    this._boids.forEach(boid => {
+      boid.setAcceleration({
+        acceleration: {
+          x: 0.0,
+          y: 0.0
+        }})
+    });
+  }
+
+  // Directly apply boid positions to a planner BoidWorld
+  applyPositions(boidData) {
+    const updatedBoids = JSON.parse(boidData);
+
+    for (const updatedBoid of updatedBoids) {
+      this._boids[updatedBoid.id].x = updatedBoid.position.x;
+      this._boids[updatedBoid.id].y = updatedBoid.position.y;
+    }
+  }
+
 };
 
 export default BoidWorld;

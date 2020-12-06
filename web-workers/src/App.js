@@ -1,35 +1,60 @@
-import SimpleWorkerPlanner from "./worker/SimpleWorkerPlanner.js";
-import BoidWorld from "./simulation/boids/BoidWorld.js";
 import PixiRenderer from "./renderer/PixiRenderer.js"
+import CanvasRenderer from "./renderer/CanvasRenderer.js";
+import Worker from "worker-loader!./worker/SimpleWorkerPlanner.js";
 
 class App {
   constructor() {
 
     // BoidWorld setup
-    const width = 1800;
-    const height = 900;
-    this.simulation = new BoidWorld({ 
-      numOfBoids: 4000, 
+    this.width = 1800;
+    this.height = 900;
+    this.workerCount = 4;
+
+    this.config = {
+      numOfBoids: 4000,
       bounds: {
-        x: [0, width],
-        y: [0, height]
+        x: [0, this.width],
+        y: [0, this.height]
       },
       boidRadius: 10,
       explosionIntesity: 100,
       explosionRadius: 100,
       maxSpeed: 2
-    });
+    }
 
-    this.readyToTick = true;
-
-    this._renderer = new PixiRenderer(this.simulation);
-    this._planner = new SimpleWorkerPlanner(this.simulation, 1, this.nextTickCallback.bind(this));
-    this._planner.init();
+    // this._renderer = new PixiRenderer(width, height);
+    this._renderer = new CanvasRenderer(this.width, this.height);
+    this._planner = new Worker({type:'module'});
+    this._planner.addEventListener('message', this.handleMessageFromPlanner.bind(this));
+    this._eventListeners = {};
   }
 
-  restart() {
-    // this._planner.init();
-    window.requestAnimationFrame(this.loop.bind(this));
+  on(eventName, cb) {
+    if (!this._eventListeners[eventName])
+      this._eventListeners[eventName] = [];
+
+    this._eventListeners[eventName] = this._eventListeners[eventName].concat(cb);
+  }
+
+  removeListener(eventName, cb) {
+    if (!this._eventListeners[eventName])
+      throw Error(`Can't remove event listener. Now listeners for event ${ eventName } exist.`);
+
+    this._eventListeners[eventName] = this._eventListeners[eventName].filter(listener => listener !== cb);
+  }
+
+  emit(eventName, data) {
+    if (this._eventListeners[eventName])
+      this._eventListeners[eventName].forEach(cb => cb(data));
+  }
+
+  reset() {
+    this._planner.postMessage({msg: 'planner-create', workerCount: this.workerCount, config: this.config});
+  }
+
+  start() {
+    this._planner.postMessage({msg: 'planner-start'});
+    this.renderTimeStamp = performance.now();
   }
 
   addBoids(amount) {
@@ -45,20 +70,18 @@ class App {
     this.simulation.setState(option, value);
   }
 
-  loop() {    
-    // tick simulation only if all previous ticks have been merged
-    // TODO: Allow dynamix selection of used tick method.
-    if (this.readyToTick) {
-      this._planner.parallelTickTransferableBinary();
-      this.readyToTick = false;
-    }
-    this._renderer.render();
-    window.requestAnimationFrame(this.loop.bind(this));
-  }
+  handleMessageFromPlanner(e) {
+    if (e.data.msg == 'main-render') {
 
-  nextTickCallback() {
-    this._planner.updateBoids();
-    this.readyToTick = true;
+      const boids = JSON.parse(e.data.boids);
+      
+      this._renderer.render(boids);
+
+      const timeTook = performance.now() - this.renderTimeStamp;
+
+      this.renderTimeStamp = performance.now();
+      this.emit("simulation-timestamps", { ...e.data.timeStamps, timeTook });
+    }
   }
 }
   

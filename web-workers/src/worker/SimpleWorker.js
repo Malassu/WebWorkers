@@ -10,18 +10,35 @@ self._localSimulation = null;
 
 self.onmessage = function(e) {
   switch (e.data.msg) {
-    case 'init':
+    case 'worker-init':
       this._localSimulation = BoidWorld.cloneWorld(e.data.serialized, e.data.sharedBuffer);
+
+      if (!e.data.sharedBuffer)
+        this._localSimulation.boidsFromJson(e.data.boids);
       return;
 
     case 'tick-json':
+      const startTimeAll = performance.now();
+      const start = e.data.start;
+      const end = e.data.end;
+
       // Overwrite boid state with the synchronized state from main thread
       self._localSimulation.boidsFromSerialized(e.data.boidsJson);
       // Compute a local tick
+      const startTimeTick = performance.now();
       self._localSimulation.tick();
+      const tickTime = performance.now() - startTimeTick;
+
       // Post updated local state to main thread
-      const boids = this._localSimulation.serializedBoids;
-      postMessage({msg: 'ticked-json', boids: boids});
+      const boids = self._localSimulation.boidsToJson(start, end);
+      postMessage({msg: 'planner-merge', start, end, boids, tickTime, allTime: performance.now() - startTimeAll });
+      return;
+
+    case 'worker-move':
+      // Apply forces from the main simulation in order to compute new positions.
+      self._localSimulation.applyForces(e.data.boids);
+      postMessage({msg: 'planner-move', boids: self._localSimulation.boidsToJson()});
+      // postMessage({msg: 'planner-move'});
       return;
     
     case 'tick-shared-binary':

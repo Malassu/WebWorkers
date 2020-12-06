@@ -30,6 +30,12 @@
       .input-wrap {
         display:table-cell;
       }
+      .timestamp-container {
+        background-color: rgba(0,0,0,0.7);
+        padding: 0.5rem;
+        width: 20rem;
+        color: red;
+      }
 
     </style>
     <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -51,8 +57,35 @@
             <p style="margin:0;">Explosion Frequency: <span id="explosionFreq">0.01</span></p>
             <input type="range" id="explosions" min="0" max="100" value="1">
           </li>
-          <li>
+          <!-- <li>
             <button id="resetButton">Reset</button>
+          </li> -->
+          <li>
+            <button id="startButton">Start</button>
+          </li>
+          <li>
+            <div class="timestamp-container">
+              <div class="timestamp">
+                <label>
+                  Render:
+                </label>
+                <span id="timeTook">0</span>ms
+              </div>
+              <div class="timestamp">
+                <label>
+                  Entire parallel tick:
+                </label>
+                <span id="parallelTick">0</span>ms
+              </div>
+              <div class="timestamp">
+                <label>Average worker response:</label>
+                <span id="avgEntireWorker">0</span>ms
+              </div>
+              <div class="timestamp">
+                <label>Average worker tick:</label>
+                <span id="avgTick">0</span>ms
+              </div>
+            </div>
           </li>
         </ul>
       </div>

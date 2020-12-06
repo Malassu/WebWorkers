@@ -8,7 +8,19 @@ import App from "./App.js";
 
 window.onload = () => {
   const app = new App();
+  app.reset();
 
+  app.on("simulation-timestamps", ({ parallelTick, timeTook, workers }) => {
+    const parallelTickElement = document.querySelector("#parallelTick");
+    const avgEntireWorkerElement = document.querySelector("#avgEntireWorker");
+    const avgTickElement = document.querySelector("#avgTick");
+    const timeTookElement = document.querySelector("#timeTook");
+
+    timeTookElement.innerHTML = timeTook;
+    parallelTickElement.innerHTML = parallelTick;
+    avgEntireWorkerElement.innerHTML = workers.reduce((acc, curr) => acc + curr.allTime, 0) / workers.length;
+    avgTickElement.innerHTML = workers.reduce((acc, curr) => acc + curr.tickTime, 0) / workers.length;
+  });
   // Setup UI
   const toggleOverlay = document.querySelector("#toggleOverlay");
   toggleOverlay.addEventListener('click', event => {
@@ -40,8 +52,13 @@ window.onload = () => {
     }
   });
 
-  const resetButton = document.querySelector("#resetButton");
-  resetButton.addEventListener('click', event => {
-    app.restart();
+  // const resetButton = document.querySelector("#resetButton");
+  // resetButton.addEventListener('click', event => {
+  //   app.reset();
+  // });
+
+  const startButton = document.querySelector("#startButton");
+  startButton.addEventListener('click', event => {
+    app.start();
   });
 };
