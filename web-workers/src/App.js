@@ -8,16 +8,16 @@ class App {
     const width = 1800;
     const height = 900;
     this.simulation = new BoidWorld({ 
-      numOfBoids: 1000, 
+      numOfBoids: 0, 
       bounds: {
         x: [0, width],
         y: [0, height]
       },
       boidRadius: 5,
       collision: true,
-      explosion: true,
+      explosion: false,
       explosionIntesity: 100,
-      explosionsPerTick: 1,
+      explosionsPerTick: 0,
       explosionRadius: 100,
       maxSpeed: 2,
       explosion: true
