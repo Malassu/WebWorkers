@@ -22,11 +22,11 @@ window.onload = () => {
     avgTickElement.innerHTML = workers.reduce((acc, curr) => acc + curr.tickTime, 0) / workers.length;
   });
   // Setup UI
-  const toggleOverlay = document.querySelector("#toggleOverlay");
-  toggleOverlay.addEventListener('click', event => {
-    const overlay = document.querySelector(".overlay");
-    overlay.style.display === "none" ? overlay.style.display = "table" : overlay.style.display = "none";
-  });
+  // const toggleOverlay = document.querySelector("#toggleOverlay");
+  // toggleOverlay.addEventListener('click', event => {
+  //   const overlay = document.querySelector(".overlay");
+  //   overlay.style.display === "none" ? overlay.style.display = "table" : overlay.style.display = "none";
+  // });
 
   const addButton = document.querySelector("#addButton");
   addButton.addEventListener('click', event => {
@@ -34,23 +34,23 @@ window.onload = () => {
     app.addBoids(amount);
   });
 
-  const collisionsCheckbox = document.querySelector("#collisions");
-  collisionsCheckbox.addEventListener('click', event => {
-    app.setWorldState('collision', collisionsCheckbox.checked);
-  });
+  // const collisionsCheckbox = document.querySelector("#collisions");
+  // collisionsCheckbox.addEventListener('click', event => {
+  //   app.setWorldState('collision', collisionsCheckbox.checked);
+  // });
 
-  const explosionsSlider = document.querySelector("#explosions");
-  const explosionFreq = document.querySelector("#explosionFreq")
-  explosionsSlider.addEventListener('change', event => {
-    const freq = explosionsSlider.value / 100;
-    explosionFreq.innerHTML = freq; 
-    if (freq > 0) {
-      app.setWorldState('explosion', true);
-      app.setWorldState('explosionProb', freq / 10);
-    } else {
-      app.setWorldState('explosion', false);
-    }
-  });
+  // const explosionsSlider = document.querySelector("#explosions");
+  // const explosionFreq = document.querySelector("#explosionFreq")
+  // explosionsSlider.addEventListener('change', event => {
+  //   const freq = explosionsSlider.value / 100;
+  //   explosionFreq.innerHTML = freq; 
+  //   if (freq > 0) {
+  //     app.setWorldState('explosion', true);
+  //     app.setWorldState('explosionProb', freq / 10);
+  //   } else {
+  //     app.setWorldState('explosion', false);
+  //   }
+  // });
 
   document.querySelectorAll(".interface-selector").forEach(radioButton => {
     radioButton.onclick = () => {
