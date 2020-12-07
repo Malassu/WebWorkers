@@ -16,6 +16,7 @@ self.onmessage = function(e) {
       return;
 
     case 'worker-tick-json':
+      self._localSimulation.updateBuffer();  
       const startTimeAll = performance.now();
       const start = e.data.start;
       const end = e.data.end;
@@ -36,6 +37,7 @@ self.onmessage = function(e) {
       return;
 
     case 'worker-tick-clone':
+      self._localSimulation.updateBuffer();  
       const startTimeAllClone = performance.now();
 
       // Compute a local tick

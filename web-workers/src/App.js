@@ -12,16 +12,16 @@ class App {
     this.workerCount = 4;
 
     this.config = {
-      numOfBoids: 8000,
+      numOfBoids: 0,
       bounds: {
         x: [0, this.width],
         y: [0, this.height]
       },
       boidRadius: 3,
       collision: true,
-      explosion: true,
+      explosion: false,
       explosionIntesity: 100,
-      explosionsPerTick: 1,
+      explosionsPerTick: 0,
       explosionRadius: 100,
       maxSpeed: 2,
       explosion: true
@@ -66,12 +66,13 @@ class App {
   }
 
   addBoids(amount) {
+    /*
     Array.from({length: amount}, () => {
-      this.simulation.addBoid();
       this._renderer.addSprite();
     });
+    */
 
-    this._planner.updateBuffers();
+    this._planner.postMessage({msg: 'add-boids', amount });
   }
 
   setWorldState(option, value) {

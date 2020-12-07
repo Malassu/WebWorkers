@@ -84,6 +84,14 @@ class SimpleWorkerPlanner {
     this.parallelTick = this.interfaceTypes[type];
   }
 
+  addBoids(amount) {
+    for (let i = 0; i < amount; i++) {
+      this.simulation.addBoid();
+    }
+
+    this.updateBuffers();
+  }
+
   // Take out values that are not transferable
   updateTransferables({ msg, index, explodionIndices, tickTime, allTime, start, end, pass, ...rest }) {
     this.transferableArrays[index] = rest;
@@ -343,6 +351,9 @@ class SimpleWorkerPlanner {
     }
     else if (e.data.msg === 'change-data-interface') {
       this.changeDataInterface(e.data.type);
+    }
+    else if (e.data.msg === 'add-boids') {
+      this.addBoids(e.data.amount);
     }
   }
 };
