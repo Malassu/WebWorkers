@@ -24,6 +24,8 @@ class App {
     });
 
     this._renderer = new PixiRenderer(this.simulation)
+    this._eventListeners = {};
+    this.tickVal = 0;
   }
 
   restart() {
@@ -41,8 +43,14 @@ class App {
     this.simulation.setState(option, value);
   }
 
-  loop() {    
+  loop() {
+    const startTimeTick = performance.now();    
     this.simulation.tick();
+    const tickTime = performance.now() - startTimeTick;
+    const entireTickElement = document.querySelector("#entireTick");
+    const simulationTickElement = document.querySelector("#simulationTick");
+    entireTickElement.innerHTML = Math.round(1 / tickTime * 100000) / 100;
+    simulationTickElement.innerHTML = tickTime;
     this._renderer.render();
     window.requestAnimationFrame(this.loop.bind(this));
   }

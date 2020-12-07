@@ -30,6 +30,12 @@
       .input-wrap {
         display:table-cell;
       }
+      .timestamp-container {
+        background-color: rgba(0,0,0,0.7);
+        padding: 0.5rem;
+        width: 20rem;
+        color: red;
+      }
 
     </style>
     <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -53,6 +59,22 @@
           </li>
           <li>
             <button id="resetButton">Reset</button>
+          </li>
+          <li>
+            <div class="timestamp-container">
+              <div class="timestamp">
+                <label>
+                  Render:
+                </label>
+                <span id="entireTick">0</span>FPS
+              </div>
+              <div class="timestamp">
+                <label>
+                  Simulation tick:
+                </label>
+                <span id="simulationTick">0</span>ms
+              </div>
+            </div>
           </li>
         </ul>
       </div>
