@@ -38,13 +38,6 @@ class SimpleWorkerPlanner {
       'transferable-binary': this.parallelTickTransferableBinary
     };
 
-    this.interfaceChangeCallback = {
-      'json': () => {},
-      'structured-cloning': () => {},
-      'shared-binary': () => { this.simulation.boidsToBinary() },
-      'transferable-binary': () => { this.transferableArrays = this.simulation.getTransferableBoidArrays(workerCount); }
-    };
-
     this.parallelTick = this.interfaceTypes['shared-binary'];
     
     this.workerCount = workerCount;
@@ -165,45 +158,54 @@ class SimpleWorkerPlanner {
     const buf = this.simulation.boidsToBuffer();
 
     this.simulation.queueBuffer(buf);
-
-    this.workers.forEach((worker) => {
-      worker.postMessage({msg: 'update-buffer', buf});
-    });
   }
 
   updateBoids() {
-    if (this.simulation.updateBuffer())
-      this.transferableArrays = this.simulation.transferableBoidArrays;
+    if (this.simulation.updateBuffer()) {
+      this.workers.forEach((worker) => {
+        worker.postMessage({msg: 'update-buffer', buf: this.simulation.binaryBuffer});
+      });
+
+      this.transferableArrays = this.simulation.getTransferableBoidArrays(this.workerCount);
+      this.simulation.boidsFromBinary();
+
+      return true;
+    }
+
+    return false;
+    
   }
 
   // Update boid data for rendering
   loop() {
     this.timer = setInterval(() => {
       if (this.readyForNextTick) {
-        postMessage({
-          msg: 'main-render',
-          boids: this.simulation.boidsToJson(),
-          timeStamps: {
-            parallelTick: this.tickStart,
-            workers: this.workerTimeStamps
-          }
-        });
-
         this.readyForNextTick = false;
 
-        this.updateBoids();
-
-        if (this.nextInterfaceType) {
-          this.interfaceChangeCallback[this.nextInterfaceType]();
-          this.parallelTick = this.interfaceTypes[this.nextInterfaceType];
-          this.nextInterfaceType = null;
+        if (this.updateBoids()) {
         }
+        else {
+          postMessage({
+            msg: 'main-render',
+            boids: this.simulation.boidsToJson(),
+            timeStamps: {
+              parallelTick: this.tickStart,
+              workers: this.workerTimeStamps
+            }
+          });
 
-        
-        this.tickStart = performance.now();
-        this.workerTimeStamps = [];
-        
-        this.parallelTick();
+          if (this.nextInterfaceType) {
+            this.simulation.boidsFromBinary();
+            this.parallelTick = this.interfaceTypes[this.nextInterfaceType];
+            this.nextInterfaceType = null;
+          }
+
+          
+          this.tickStart = performance.now();
+          this.workerTimeStamps = [];
+          
+          this.parallelTick();
+        }
       }
     }, 16);
   }
@@ -358,6 +360,16 @@ class SimpleWorkerPlanner {
             }
           }
           return;
+
+          case 'updated-buffer':
+            this.tickedWorkerCount++;
+          
+            // merge worker states to main simulation when all workers have ticked
+            if (this.tickedWorkerCount === this.workerCount) {
+              this.tickedWorkerCount = 0;
+              this.readyForNextTick = true;
+            }
+            return;
 
       default:
         return;
