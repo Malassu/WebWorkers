@@ -50,6 +50,26 @@
             <button id="addButton">Add</button>
           </li>
           <li>
+            <div>
+              <label class="radio-container">
+                <input class="interface-selector" data-interface-type="json" type="radio" checked="checked" name="radio">
+                <span class="checkmark">JSON</span>
+              </label>
+              <label class="radio-container">
+                <input class="interface-selector" data-interface-type="structured-cloning" type="radio" name="radio">
+                <span class="checkmark">Structured cloning</span>
+              </label>
+              <label class="radio-container">
+                <input class="interface-selector" data-interface-type="shared-binary" type="radio" name="radio">
+                <span class="checkmark">Shared binary</span>
+              </label>
+              <label class="radio-container">
+                  <input class="interface-selector" data-interface-type="transferable-binary" type="radio" name="radio">
+                  <span class="checkmark">Transferable objects</span>
+                </label>
+              </div>
+            </li>
+          <li>
             <input type="checkbox" id="collisions" name="collisions" checked>
             <label for="collisions">Collisions</label>
           </li>

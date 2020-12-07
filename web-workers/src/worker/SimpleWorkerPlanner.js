@@ -13,16 +13,9 @@ class SimpleWorkerPlanner {
 
     this.movedWorkerCount = 0;
 
-    this.interfaceTypes = {
-      'json': this.parallelTickJson.bind(this),
-      'structured-cloning': this.parallelTickClone.bind(),
-      'shared-binary': this.parallelTickSharedBinary.bind(this),
-      'transferable-binary': this.parallelTickTransferableBinary.bind(this)
-    };
-
-    this.parallelTick = this.interfaceTypes['json'];
-
     this.forces = [];
+
+    this.nextInterfaceType = null;
     
     // callback to request next tick from the application
     // this.nextTickCallback = nextTickCallback;
@@ -38,8 +31,26 @@ class SimpleWorkerPlanner {
     this.tickStart = null;
     this.workerTimeStamps = [];
 
+    this.interfaceTypes = {
+      'json': this.parallelTickJson,
+      'structured-cloning': this.parallelTickClone,
+      'shared-binary': this.parallelTickSharedBinary,
+      'transferable-binary': this.parallelTickTransferableBinary
+    };
+
+    this.interfaceChangeCallback = {
+      'json': () => {},
+      'structured-cloning': () => {},
+      'shared-binary': () => { this.simulation.boidsToBinary() },
+      'transferable-binary': () => { this.transferableArrays = this.simulation.getTransferableBoidArrays(workerCount); }
+    };
+
+    this.parallelTick = this.interfaceTypes['shared-binary'];
+    
     this.workerCount = workerCount;
     this.readyForNextTick = true;
+
+
 
     postMessage({
       msg: 'shared-buffer',
@@ -81,7 +92,7 @@ class SimpleWorkerPlanner {
   }
 
   changeDataInterface(type) {
-    this.parallelTick = this.interfaceTypes[type];
+    this.nextInterfaceType = type;
   }
 
   addBoids(amount) {
@@ -177,11 +188,21 @@ class SimpleWorkerPlanner {
             workers: this.workerTimeStamps
           }
         });
+
+        this.readyForNextTick = false;
+
+        this.updateBoids();
+
+        if (this.nextInterfaceType) {
+          this.interfaceChangeCallback[this.nextInterfaceType]();
+          this.parallelTick = this.interfaceTypes[this.nextInterfaceType];
+          this.nextInterfaceType = null;
+        }
+
         
         this.tickStart = performance.now();
         this.workerTimeStamps = [];
-        this.readyForNextTick = false;
-
+        
         this.parallelTick();
       }
     }, 16);
@@ -250,7 +271,7 @@ class SimpleWorkerPlanner {
             this.tickedWorkerCount = 0;
             const boidsCloned = this.simulation.serializedBoids();
             this.workers.forEach(worker => {
-              worker.postMessage({msg: 'worker-json-merge', boids: boidsCloned})
+              worker.postMessage({msg: 'worker-clone-merge', boids: boidsCloned})
             });
           }
           return;

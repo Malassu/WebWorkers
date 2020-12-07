@@ -52,6 +52,12 @@ window.onload = () => {
     }
   });
 
+  document.querySelectorAll(".interface-selector").forEach(radioButton => {
+    radioButton.onclick = () => {
+      app.changeDataIntreface(radioButton.dataset.interfaceType);
+    };
+  });
+
   // const resetButton = document.querySelector("#resetButton");
   // resetButton.addEventListener('click', event => {
   //   app.reset();

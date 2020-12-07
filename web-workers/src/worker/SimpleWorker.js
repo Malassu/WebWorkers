@@ -9,6 +9,10 @@ import BoidWorld from '../simulation/boids/BoidWorld.js';
 self._localSimulation = null;
 
 self.onmessage = function(e) {
+  if (self._localSimulation)
+      // If boids are added dynamically, the binary buffer needs to be updated.
+      self._localSimulation.updateBuffer();
+
   switch (e.data.msg) {
     case 'worker-init':
       this._localSimulation = BoidWorld.cloneWorld(e.data.serialized, e.data.sharedBuffer);
@@ -16,7 +20,6 @@ self.onmessage = function(e) {
       return;
 
     case 'worker-tick-json':
-      self._localSimulation.updateBuffer();  
       const startTimeAll = performance.now();
       const start = e.data.start;
       const end = e.data.end;
@@ -37,7 +40,6 @@ self.onmessage = function(e) {
       return;
 
     case 'worker-tick-clone':
-      self._localSimulation.updateBuffer();  
       const startTimeAllClone = performance.now();
 
       // Compute a local tick
@@ -46,7 +48,10 @@ self.onmessage = function(e) {
       const tickTimeClone = performance.now() - startTimeTickClone;
 
       // Post updated local state to main thread
-      postMessage({msg: 'planner-clone-merge', start: e.data.start, end: e.data.end, boids: self._localSimulation.serializedBoids(start, end), tickTime: tickTimeClone, allTime: performance.now() - startTimeAllClone });
+      postMessage({
+        msg: 'planner-clone-merge', start: e.data.start, end: e.data.end,
+        boids: self._localSimulation.serializedBoids(e.data.start, e.data.end), tickTime: tickTimeClone, allTime: performance.now() - startTimeAllClone
+      });
       return;
 
     case 'worker-clone-merge':
@@ -56,8 +61,6 @@ self.onmessage = function(e) {
 
     case 'worker-tick-shared-binary':
       const startTimeAllShared = performance.now();
-      // If boids are added dynamically, the binary buffer needs to be updated.
-      self._localSimulation.updateBuffer();
 
       // Overwrite boid state with the synchronized state from main thread
       
@@ -88,10 +91,7 @@ self.onmessage = function(e) {
       // Post updated local state to main thread
       // NOTE: the function writeBoidsToTransferable returns the required transferable list https://developers.google.com/web/updates/2011/12/Transferable-Objects-Lightning-Fast
       
-      postMessage({ ...e.data, tickTime: tickTimeTransferable, allTime: performance.now() - startTimeAllTransferable, msg: "ticked-transferable-binary" }, self._localSimulation.writeBoidsToTransferable(e.data));        
-      // If boids are added dynamically, the binary buffer needs to be updated.
-      // NOTE: Update done using shared buffer for convinience.
-      self._localSimulation.updateBuffer();  
+      postMessage({ ...e.data, tickTime: tickTimeTransferable, allTime: performance.now() - startTimeAllTransferable, msg: "ticked-transferable-binary" }, self._localSimulation.writeBoidsToTransferable(e.data));
       return;
 
       case 'worker-merge-transferable-binary':  

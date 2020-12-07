@@ -12,7 +12,7 @@ class App {
     this.workerCount = 4;
 
     this.config = {
-      numOfBoids: 0,
+      numOfBoids: 4000,
       bounds: {
         x: [0, this.width],
         y: [0, this.height]
@@ -63,6 +63,10 @@ class App {
   start() {
     this._planner.postMessage({msg: 'planner-start'});
     this.renderTimeStamp = performance.now();
+  }
+
+  changeDataIntreface(type) {
+    this._planner.postMessage({msg: 'change-data-interface', type });
   }
 
   addBoids(amount) {
