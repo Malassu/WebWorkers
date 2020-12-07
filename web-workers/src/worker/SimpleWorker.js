@@ -9,10 +9,6 @@ import BoidWorld from '../simulation/boids/BoidWorld.js';
 self._localSimulation = null;
 
 self.onmessage = function(e) {
-  if (self._localSimulation)
-      // If boids are added dynamically, the binary buffer needs to be updated.
-      self._localSimulation.updateBuffer();
-
   switch (e.data.msg) {
     case 'worker-init':
       this._localSimulation = BoidWorld.cloneWorld(e.data.serialized, e.data.sharedBuffer);
@@ -20,6 +16,8 @@ self.onmessage = function(e) {
       return;
 
     case 'worker-tick-json':
+      // If boids are added dynamically, the binary buffer needs to be updated.
+
       const startTimeAll = performance.now();
       const start = e.data.start;
       const end = e.data.end;
@@ -40,6 +38,9 @@ self.onmessage = function(e) {
       return;
 
     case 'worker-tick-clone':
+      // If boids are added dynamically, the binary buffer needs to be updated.
+      if (self._localSimulation.updateBuffer())
+        self._localSimulation.boidsFromBinary();
       const startTimeAllClone = performance.now();
 
       // Compute a local tick
@@ -60,6 +61,7 @@ self.onmessage = function(e) {
       return;
 
     case 'worker-tick-shared-binary':
+      // If boids are added dynamically, the binary buffer needs to be updated.
       const startTimeAllShared = performance.now();
 
       // Overwrite boid state with the synchronized state from main thread
@@ -100,6 +102,9 @@ self.onmessage = function(e) {
 
       case 'update-buffer':
         self._localSimulation.queueBuffer(e.data.buf);
+        self._localSimulation.updateBuffer()
+        self._localSimulation.boidsFromBinary();
+        postMessage({ msg: 'updated-buffer' });
         return;
     default:
       return;
