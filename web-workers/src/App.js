@@ -1,25 +1,48 @@
-class KonvaView extends HTMLElement {
-    constructor() {
-      self = super();
-        
-      this.renderer = undefined;
-      this.simulation = undefined;
+import BoidWorld from "./simulation/boids/BoidWorld.js";
+import PixiRenderer from "./renderer/PixiRenderer.js"
 
-    }
+class App {
+  constructor() {
 
-    init() {
-      //window.requestAnimationFrame(this.draw.bind(this));
-    }
+    // BoidWorld setup
+    const width = 1800;
+    const height = 900;
+    this.simulation = new BoidWorld({ 
+      numOfBoids: 1000, 
+      bounds: {
+        x: [0, width],
+        y: [0, height]
+      },
+      boidRadius: 10,
+      explosionIntesity: 100,
+      explosionRadius: 100,
+      maxSpeed: 2
+    });
 
-    updateSettings() {
-      // TODO pass UI settings to simulation
-    }
+    this._renderer = new PixiRenderer(this.simulation)
+  }
 
-    draw() {
-      this.simulation.iterate();
-      this.renderer.render();
-      //window.requestAnimationFrame(this.draw.bind(this));
-    }
+  restart() {
+    window.requestAnimationFrame(this.loop.bind(this));
+  }
+
+  addBoids(amount) {
+    Array.from({length: amount}, () => {
+      this.simulation.addBoid();
+      this._renderer.addSprite();
+    });
+  }
+
+  setWorldState(option, value) {
+    this.simulation.setState(option, value);
+  }
+
+  loop() {    
+    this.simulation.tick();
+    this._renderer.render();
+    window.requestAnimationFrame(this.loop.bind(this));
+  }
+
 }
   
-customElements.define('konva-view', KonvaView);
+export default App;

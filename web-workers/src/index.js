@@ -1,46 +1,41 @@
-import BoidWorld from "./simulation/boids/BoidWorld.js";
-
-const canvas = document.getElementById('testCanvas');
-const { width, height } = canvas;
-canvas.style.border = "1px solid black";
-
-
-const ctx = canvas.getContext('2d');
+import App from "./App.js";
 
 window.onload = () => {
-  const world = new BoidWorld({ 
-    numOfBoids: 1000, 
-    bounds: {
-      x: [0, width],
-      y: [0, height]
-    },
-    boidRadius: 10,
-    maxSpeed: 5
-  });
-  
-  world.boids.forEach(value => {
-    const circle = new Path2D();
-    circle.arc(value.x, value.y, value.radius, 0, 2 * Math.PI);
-    ctx.fill(circle);
+  const app = new App();
+
+  // Setup UI
+  const toggleOverlay = document.querySelector("#toggleOverlay");
+  toggleOverlay.addEventListener('click', event => {
+    const overlay = document.querySelector(".overlay");
+    overlay.style.display === "none" ? overlay.style.display = "table" : overlay.style.display = "none";
   });
 
-  world.tick();
+  const addButton = document.querySelector("#addButton");
+  addButton.addEventListener('click', event => {
+    const amount = document.getElementById("amount").value;
+    app.addBoids(amount);
+  });
 
-  setInterval(() => {
-    ctx.clearRect(0, 0, width, height);
-  
-    world.boids.forEach(value => {
-      const circle = new Path2D();
-      circle.arc(value.x, value.y, value.radius, 0, 2 * Math.PI);
-      ctx.fill(circle);
-    });
-    
-    world.tick();
-  
-  }, 33);
-  
-  
+  const collisionsCheckbox = document.querySelector("#collisions");
+  collisionsCheckbox.addEventListener('click', event => {
+    app.setWorldState('collision', collisionsCheckbox.checked);
+  });
 
-  
+  const explosionsSlider = document.querySelector("#explosions");
+  const explosionFreq = document.querySelector("#explosionFreq")
+  explosionsSlider.addEventListener('change', event => {
+    const freq = explosionsSlider.value / 100;
+    explosionFreq.innerHTML = freq; 
+    if (freq > 0) {
+      app.setWorldState('explosion', true);
+      app.setWorldState('explosionProb', freq / 10);
+    } else {
+      app.setWorldState('explosion', false);
+    }
+  });
+
+  const resetButton = document.querySelector("#resetButton");
+  resetButton.addEventListener('click', event => {
+    app.restart();
+  });
 };
-  
