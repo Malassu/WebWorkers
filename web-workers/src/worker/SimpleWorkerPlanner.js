@@ -13,6 +13,15 @@ class SimpleWorkerPlanner {
 
     this.movedWorkerCount = 0;
 
+    this.interfaceTypes = {
+      'json': this.parallelTickJson.bind(this),
+      'structured-cloning': this.parallelTickClone.bind(),
+      'shared-binary': this.parallelTickSharedBinary.bind(this),
+      'transferable-binary': this.parallelTickTransferableBinary.bind(this)
+    };
+
+    this.parallelTick = this.interfaceTypes['json'];
+
     this.forces = [];
     
     // callback to request next tick from the application
@@ -71,6 +80,10 @@ class SimpleWorkerPlanner {
 
   }
 
+  changeDataInterface(type) {
+    this.parallelTick = this.interfaceTypes[type];
+  }
+
   // Take out values that are not transferable
   updateTransferables({ msg, index, explodionIndices, tickTime, allTime, start, end, pass, ...rest }) {
     this.transferableArrays[index] = rest;
@@ -115,6 +128,20 @@ class SimpleWorkerPlanner {
     });
   }
 
+  parallelTickClone() {
+    // Precompute exploding boids by setting explosion flags
+    const explodionIndices = this.simulation.generateExplosions();
+    // Split the workload among workers
+    const numOfBoids = this.simulation.getState("numOfBoids");
+    const chunkSize = Math.round(numOfBoids/this.workerCount);
+    this.workers.forEach((worker, i) => {
+      const start = i*chunkSize;
+      const end = (i === this.workerCount-1) ? numOfBoids : start + chunkSize;
+  
+      worker.postMessage({msg: 'worker-tick-clone', start, end, explodionIndices});
+    });
+  }
+
   updateBuffers() {
     const buf = this.simulation.boidsToBuffer();
 
@@ -145,10 +172,9 @@ class SimpleWorkerPlanner {
         
         this.tickStart = performance.now();
         this.workerTimeStamps = [];
-
-
-        this.parallelTickTransferableBinary();
         this.readyForNextTick = false;
+
+        this.parallelTick();
       }
     }, 16);
   }
@@ -203,6 +229,51 @@ class SimpleWorkerPlanner {
           });
         }
         return;
+
+        case 'planner-clone-merge':
+          this.tickedWorkerCount++;
+          this.workerTimeStamps = this.workerTimeStamps.concat((({ tickTime, allTime }) => ({ tickTime, allTime }))(e.data));
+  
+          this.simulation.mergeBoids(e.data.boids);
+    
+          // 2. When all workers have ticked,
+          //    send merged forces to each worker for computing new postions.
+          if (this.tickedWorkerCount === this.workerCount) {
+            this.tickedWorkerCount = 0;
+            const boidsCloned = this.simulation.serializedBoids();
+            this.workers.forEach(worker => {
+              worker.postMessage({msg: 'worker-json-merge', boids: boidsCloned})
+            });
+          }
+          return;
+  
+        // 3. Catch updated subworker simulations
+        case 'planner-clone-merged':
+          this.movedWorkerCount++;
+          if (this.movedWorkerCount === this.workerCount) {
+            this.tickStart = performance.now() - this.tickStart;
+            this.movedWorkerCount = 0;          
+            this.readyForNextTick = true;
+          }
+          return;
+  
+        case 'ticked-shared-binary':
+          this.tickedWorkerCount++;
+          this.workerTimeStamps = this.workerTimeStamps.concat((({ tickTime, allTime }) => ({ tickTime, allTime }))(e.data));
+  
+          // merge worker states to main simulation when all workers have ticked
+          if (this.tickedWorkerCount === this.workerCount) {
+            // reset ticked count and request next tick
+            this.tickedWorkerCount = 0;
+            const numOfBoids = this.simulation.getState("numOfBoids");
+            const chunkSize = Math.round(numOfBoids/this.workerCount);
+            this.workers.forEach((worker, i) => {
+              const start = i*chunkSize;
+              const end = (i === this.workerCount-1) ? numOfBoids : start + chunkSize;
+              worker.postMessage({ msg: 'worker-shared-binary-merge', start, end });
+            });
+          }
+          return;
 
       case 'planner-shared-binary-merged':
         this.tickedWorkerCount++;
@@ -269,6 +340,9 @@ class SimpleWorkerPlanner {
       this.create(e.data.workerCount, e.data.config);
     } else if (e.data.msg == 'planner-start') {
       this.loop();
+    }
+    else if (e.data.msg === 'change-data-interface') {
+      this.changeDataInterface(e.data.type);
     }
   }
 };

@@ -35,6 +35,23 @@ self.onmessage = function(e) {
       postMessage({ msg: 'planner-json-merged' });
       return;
 
+    case 'worker-tick-clone':
+      const startTimeAllClone = performance.now();
+
+      // Compute a local tick
+      const startTimeTickClone = performance.now();
+      self._localSimulation.tick(e.data.start, e.data.end, e.data.explodionIndices);
+      const tickTimeClone = performance.now() - startTimeTickClone;
+
+      // Post updated local state to main thread
+      postMessage({msg: 'planner-clone-merge', start: e.data.start, end: e.data.end, boids: self._localSimulation.serializedBoids(start, end), tickTime: tickTimeClone, allTime: performance.now() - startTimeAllClone });
+      return;
+
+    case 'worker-clone-merge':
+      self._localSimulation.mergeBoids(e.data.boids);
+      postMessage({ msg: 'planner-clone-merged' });
+      return;
+
     case 'worker-tick-shared-binary':
       const startTimeAllShared = performance.now();
       // If boids are added dynamically, the binary buffer needs to be updated.
