@@ -6,7 +6,8 @@ class CanvasRenderer {
     var canvas = document.createElement("canvas");
     canvas.setAttribute("width", this.width);
     canvas.setAttribute("height", this.height);
-    document.body.appendChild(canvas);
+    const simulation = document.querySelector("#simulation");
+    simulation.appendChild(canvas);
     this.ctx = canvas.getContext('2d');
   }
   
