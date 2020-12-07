@@ -72,7 +72,7 @@ class SimpleWorkerPlanner {
   }
 
   // Take out values that are not transferable
-  updateTransferables({ msg, index, explodionIndices, start, end, pass, ...rest }) {
+  updateTransferables({ msg, index, explodionIndices, tickTime, allTime, start, end, pass, ...rest }) {
     this.transferableArrays[index] = rest;
   }
 
@@ -219,6 +219,7 @@ class SimpleWorkerPlanner {
       case 'ticked-transferable-binary':
         this.tickedWorkerCount++;
         this.simulation.mergeTransferables(e.data);
+        this.workerTimeStamps = this.workerTimeStamps.concat((({ tickTime, allTime }) => ({ tickTime, allTime }))(e.data));
   
         this.updateTransferables(e.data);
 

@@ -60,13 +60,16 @@ self.onmessage = function(e) {
       return;
 
     case 'tick-transferable-binary':
+      const startTimeAllTransferable = performance.now();
       // Compute a local tick
+      const startTimeTickTransferable = performance.now();
       self._localSimulation.tick(e.data.start, e.data.end, e.data.explodionIndices);
+      const tickTimeTransferable = performance.now() - startTimeTickTransferable;
 
       // Post updated local state to main thread
       // NOTE: the function writeBoidsToTransferable returns the required transferable list https://developers.google.com/web/updates/2011/12/Transferable-Objects-Lightning-Fast
       
-      postMessage({ ...e.data, msg: "ticked-transferable-binary" }, self._localSimulation.writeBoidsToTransferable(e.data));        
+      postMessage({ ...e.data, tickTime: tickTimeTransferable, allTime: performance.now() - startTimeAllTransferable, msg: "ticked-transferable-binary" }, self._localSimulation.writeBoidsToTransferable(e.data));        
       // If boids are added dynamically, the binary buffer needs to be updated.
       // NOTE: Update done using shared buffer for convinience.
       self._localSimulation.updateBuffer();  
