@@ -12,25 +12,25 @@ class App {
     this.workerCount = 4;
 
     this.config = {
-      numOfBoids: 4000,
+      numOfBoids: 10,
       bounds: {
         x: [0, this.width],
         y: [0, this.height]
       },
       boidRadius: 3,
       collision: true,
-      explosion: false,
+      explosion: true,
       explosionIntesity: 100,
-      explosionsPerTick: 0,
+      explosionsPerTick: 1,
       explosionRadius: 100,
       maxSpeed: 2,
-      explosion: true
     }
 
 
 
-    // this._renderer = new PixiRenderer(this.config);
-    this._renderer = new CanvasRenderer(this.width, this.height);
+    this._renderer = new PixiRenderer(this.config);
+    this.pixi = true;
+    // this._renderer = new CanvasRenderer(this.config);
     this._planner = new Worker({type:'module'});
     this._planner.addEventListener('message', this.handleMessageFromPlanner.bind(this));
     this._eventListeners = {};
@@ -70,11 +70,9 @@ class App {
   }
 
   addBoids(amount) {
-    /*
-    Array.from({length: amount}, () => {
-      this._renderer.addSprite();
-    });
-    */
+   if (this.pixi) {
+    this._renderer.addSprites(amount);
+   }
 
     this._planner.postMessage({msg: 'add-boids', amount });
   }

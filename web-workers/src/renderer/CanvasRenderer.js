@@ -1,7 +1,7 @@
 class CanvasRenderer {
-  constructor(width, height) {
-    this.width = width;
-    this.height = height;
+  constructor(config) {
+    this.width = config.bounds["x"][1];
+    this.height = config.bounds["y"][1];
     
     var canvas = document.createElement("canvas");
     canvas.setAttribute("width", this.width);

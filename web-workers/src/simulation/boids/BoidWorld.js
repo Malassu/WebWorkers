@@ -80,6 +80,7 @@ class BoidWorld {
 
     for (let boid of this.boids) {
       boid.collided = false;
+      boid.exploded = false;
     }
 
     // Apply behavior forces
@@ -289,6 +290,7 @@ class BoidWorld {
     const explodingBoids = this._boids.filter(boid => explosionIndices.includes(boid.id));
     
     for (const explosionBoid of explodingBoids) {
+      explosionBoid.exploded = true;
       // If this boid was flagged to explode go through the victims within assigned section
       for (const victimBoid of this._boids.slice(start, end)) {
         // Notice that n can later be used as a normal vector for calculating the acceleration.
@@ -315,10 +317,7 @@ class BoidWorld {
 
     for (const boid of this._boids) {
       if (randomBoidIndices.includes(boid.id) && Math.random() < explosionProb) {
-        boid.exploded = true;
         explodionIndices.push(boid.id);
-      } else {
-        boid.exploded = false;
       }
     }
     return explodionIndices;
@@ -442,6 +441,7 @@ class BoidWorld {
       vXArray[index] = boid.velocity.x;
       vYArray[index] = boid.velocity.y;
       colArray[index] = boid.collided;
+      expArray[index] = boid.exploded;
     }
 
     return [ 

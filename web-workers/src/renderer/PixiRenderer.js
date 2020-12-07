@@ -5,8 +5,8 @@ class PixiRenderer {
 
     this.image = "images/blue_ball_small.png";
     this.balls = [];
-    this.width = config.width;
-    this.height = config.height;
+    this.width = config.bounds["x"][1];
+    this.height = config.bounds["y"][1];
     this.numOfBoids = config.numOfBoids;
 
     // PIXI setup
@@ -18,11 +18,13 @@ class PixiRenderer {
     }
 
     PIXI.utils.sayHello(type);
+    console.log(config);
 
     this.app = new PIXI.Application({width: this.width, height: this.height, forceCanvas: true, type});
     this.app.renderer.backgroundColor = 0xFFFFFF;
     this.app.view.style.border = "solid";
-    document.body.appendChild(this.app.view);
+    const simulation = document.querySelector("#simulation");
+    simulation.appendChild(this.app.view);
 
     // Set collision texture
     this.colors = ['FF0000', 'F5161B', 'EC2C37', 'E24253', 'D9586F', 'CF6E8A', 'C684A6', 'BC9AC2', 'B3B0DE', 'AAC7FA'];
@@ -40,7 +42,7 @@ class PixiRenderer {
       .load(this.init.bind(this));
   }
 
-  getExplosionTexture(radius) {
+  getExplosionTexture(explosionRadius) {
     const textures = [];
     const colors = ['000000','FFFFFF'];
 
@@ -48,9 +50,9 @@ class PixiRenderer {
       const circle = new PIXI.Graphics();
       circle.beginFill(`0x${color}`);
       // circle.lineStyle(2, `0x${color}`);
-      circle.drawCircle(radius, radius, radius);
+      circle.drawCircle(explosionRadius, explosionRadius, explosionRadius);
       circle.beginHole();
-      circle.drawCircle(radius, radius, radius - 1);
+      circle.drawCircle(explosionRadius, explosionRadius, explosionRadius - 1);
       circle.endHole();
       circle.endFill();
       const texture = PIXI.RenderTexture.create(circle.width, circle.height);
@@ -119,14 +121,12 @@ class PixiRenderer {
   }
 
   render(boids) {
-    console.log("TEST RENDER")
     boids.forEach((boid, i) => {
       if (this.balls[i] !== undefined) {
         let sprite = this.balls[i];
         let x = boid["position"]["x"];
         let y = boid["position"]["y"];
         sprite.position.set(x, y);
-        
         // play animations
         if (boid.collided) {
           sprite.gotoAndPlay(0);
