@@ -27,23 +27,33 @@ class BoidWorld {
     this._collision = this._collision.bind(this);
     this._explosion = this._explosion.bind(this);
 
-    this._boids = Array.from({ length: this._state.getState("numOfBoids") }, this._generateBoid);
+    this._boids = Array.from({ length: this._state.getState("numOfBoids") }, () => this._generateBoid());
     this._grid = new Grid(this._state.getState("bounds"), this._state.getState("gridElementLimit"), null, this._boids);
 
   };
 
   // Creates a new boids with random coordinates within bounds.
-  _generateBoid() {
+  _generateBoid(addToGrid = false, pos, vel, id) {
     const { x, y } = this._state.getState("bounds");
-    const position = getRandom2D(x,y);
     const maxSpeed = this.getState("maxSpeed");
 
-    return new Boid({ 
-      position, 
+    // Generate random vectors if not given
+    const position = typeof pos === "undefined" ? getRandom2D(x,y) : new Vector2D(pos.x, pos.y);
+    const velocity = typeof vel === "undefined" ? getRandom2D([-maxSpeed, maxSpeed]) : new Vector2D(vel.x, vel.y);
+
+    const boid = new Boid({ 
+      position,
+      velocity,
       radius: this._state.getState("boidRadius"),
       maxSpeed: this._state.getState("maxSpeed"),
-      velocity: getRandom2D([-maxSpeed, maxSpeed])
+      id
     });
+
+    if (addToGrid) {
+      boid.grid = this._grid.findFittingLeaf(boid);
+    }
+    
+    return boid 
   }
 
   // Runs next step of the simulation.
@@ -92,7 +102,7 @@ class BoidWorld {
   }
 
   addBoid() {
-    this._boids.push(this._generateBoid());
+    this._boids.push(this._generateBoid(true));
     this.setState("numOfBoids", this._boids.length);
   }
 
