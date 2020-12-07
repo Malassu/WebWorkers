@@ -13,10 +13,14 @@ class App {
         x: [0, width],
         y: [0, height]
       },
-      boidRadius: 10,
+      boidRadius: 3,
+      collision: true,
+      explosion: true,
       explosionIntesity: 100,
+      explosionsPerTick: 1,
       explosionRadius: 100,
-      maxSpeed: 2
+      maxSpeed: 2,
+      explosion: true
     });
 
     this._renderer = new PixiRenderer(this.simulation)
