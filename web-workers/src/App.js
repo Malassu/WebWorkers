@@ -13,7 +13,7 @@ class App {
         x: [0, width],
         y: [0, height]
       },
-      boidRadius: 3,
+      boidRadius: 5,
       collision: true,
       explosion: true,
       explosionIntesity: 100,
