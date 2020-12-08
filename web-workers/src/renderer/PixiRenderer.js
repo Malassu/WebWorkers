@@ -22,7 +22,8 @@ class PixiRenderer {
     this.app = new PIXI.Application({width: this.width, height: this.height, forceCanvas: true, type});
     this.app.renderer.backgroundColor = 0xFFFFFF;
     this.app.view.style.border = "solid";
-    document.body.appendChild(this.app.view);
+    const container = document.querySelector("#simulation");
+    container.appendChild(this.app.view);
 
     // Set collision texture
     this.colors = ['FF0000', 'F5161B', 'EC2C37', 'E24253', 'D9586F', 'CF6E8A', 'C684A6', 'BC9AC2', 'B3B0DE', 'AAC7FA'];

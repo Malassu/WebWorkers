@@ -58,6 +58,13 @@ class BoidWorld {
 
   // Runs next step of the simulation.
   tick() {
+
+    // clear behavior status
+    this._boids.forEach((boid) => {
+      boid.collided = false;
+      boid.exploded = false;
+    });
+
     ["bounded", "collision", "explosion"].map(rule => {
       if (this._state.getState(rule))
         this[`_${ rule }`]();
@@ -196,7 +203,9 @@ class BoidWorld {
 
           // 5. Calculate a1 = 2*f1 - f2 and a2 = 2*f2 + f1.
           boid1.acceleration = boid1.acceleration.add(f1.scale(2).subtract(f2));
-
+          
+          // 6. Set collision status
+          boid1.collided = true;
         }
       }
     }
@@ -215,6 +224,7 @@ class BoidWorld {
     // For each boid B:
     for (const explosionBoid of randomBoids) {
       if (Math.random() < explosionProb) {
+        explosionBoid.exploded = true;
         
         for (const victimBoid of this._boids) {
           // Notice that n can later be used as a normal vector for calculating the acceleration.

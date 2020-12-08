@@ -15,12 +15,11 @@ class App {
       },
       boidRadius: 5,
       collision: true,
-      explosion: false,
+      explosion: true,
       explosionIntesity: 100,
-      explosionsPerTick: 0,
+      explosionsPerTick: 1,
       explosionRadius: 100,
       maxSpeed: 2,
-      explosion: true
     });
 
     this._renderer = new PixiRenderer(this.simulation)

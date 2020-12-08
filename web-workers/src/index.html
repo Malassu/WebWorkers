@@ -15,7 +15,13 @@
          background-color: rgba(0,0,0,0.1);
          border: solid 1px;
          display:table;
-       }
+      }
+      .flex-container {
+          display: flex;
+      }
+      .flex-child {
+          flex: 1;
+      }
       ul {
         margin: 0;
         padding: 0;
@@ -31,52 +37,56 @@
         display:table-cell;
       }
       .timestamp-container {
-        background-color: rgba(0,0,0,0.7);
+        background-color: rgba(0,0,0,0.2);
         padding: 0.5rem;
-        width: 20rem;
+        width: 15rem;
         color: red;
+        font-size: 1rem;
       }
 
     </style>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div class="container">
-      <button id="toggleOverlay">Hide</button>
-      <div class="overlay">
-        <ul>
-          <li>
-            <div class="input-wrap">
-              <input type="number" id="amount" value="10">
-            </div>
-            <button id="addButton">Add</button>
-          </li>
-          <li>
-            <input type="checkbox" id="collisions" name="collisions" checked>
-            <label for="collisions">Collisions</label>
-          </li>
-          <li>
-            <p style="margin:0;">Explosion Frequency: <span id="explosionFreq">0.01</span></p>
-            <input type="range" id="explosions" min="0" max="100" value="1">
-          </li>
-          <li>
-            <button id="resetButton">Reset</button>
-          </li>
-          <li>
-            <div class="timestamp-container">
-              <div class="timestamp">
-                <label>
-                  Render:
-                </label>
-                <span id="entireTick">0</span>FPS
+    <div class="flex-container">
+      <div id="simulation" class="flex-child"></div>
+      <div class="container flex-child">
+        <button id="toggleOverlay">Hide</button>
+        <div class="overlay">
+          <ul>
+            <li>
+              <div class="input-wrap">
+                <input type="number" id="amount" value="10">
               </div>
-              <div class="timestamp">
-                <label>
-                  Simulation tick:
-                </label>
-                <span id="simulationTick">0</span>ms
+              <button id="addButton">Add</button>
+            </li>
+            <!-- <li>
+              <input type="checkbox" id="collisions" name="collisions" checked>
+              <label for="collisions">Collisions</label>
+            </li> -->
+            <!-- <li>
+              <p style="margin:0;">Explosion Frequency: <span id="explosionFreq">0.01</span></p>
+              <input type="range" id="explosions" min="0" max="100" value="1">
+            </li> -->
+            <li>
+              <button id="resetButton">Start</button>
+            </li>
+            <li>
+              <div class="timestamp-container">
+                <div class="timestamp">
+                  <label>
+                    Render:
+                  </label>
+                  <span id="entireTick">0</span>FPS
+                </div>
+                <div class="timestamp">
+                  <label>
+                    Simulation tick:
+                  </label>
+                  <span id="simulationTick">0</span>ms
+                </div>
               </div>
-            </div>
-          </li>
-        </ul>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
     <!-- <canvas id="testCanvas" width="1000" height="800"></canvas> -->
