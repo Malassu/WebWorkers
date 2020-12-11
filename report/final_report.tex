@@ -63,8 +63,7 @@ HTML5 introduced web workers as a way to utilize concurrent computation in the d
 computationally demanding applications with the web browser while attempting to maintain a high quality of experience.
 
 This paper follows the implementation of a computer physics simulation and compares the architectural decisions that can be applied to it. Different architectures with and 
-without web workers are analysed and compared in terms of their performance metrics such as FPS, memory usage, processing delay and message transfer time. The perceived 
-quality of the simulation is also compared between the different versions.
+without web workers are analysed and compared in terms of their performance metrics such as FPS, memory usage, processing delay and message transfer time.
  
 \end{abstract}
 
@@ -81,8 +80,7 @@ Web workers also have some limitations. They can not use DOM operations or acces
 the worker threads is not possible. JavaScript is also unable to access the underlying hardware information of a computer to, for example, fetch the number of CPU cores. \cite{watanabe, verdu}
 
 This paper follows and compares the architecturally different implementations of a computer physics simulation. These architectures apply different ways to implement a 
-web-based application with and without web workers. The comparison is done with respect to performance metrics such as FPS, memory usage, message transfer time, processing delay and 
-perceived quality. After this introduction, section \ref{sec:soa} of this paper covers the literature and studies related to web workers. Section \ref{sec:implementation} describes all the
+web-based application with and without web workers. The comparison is done with respect to performance metrics such as FPS, memory usage, message transfer time and processing delay. After this introduction, section \ref{sec:soa} of this paper covers the literature and studies related to web workers. Section \ref{sec:implementation} describes all the
 physics simulation implementations made for the purposes of this research paper. Section \ref{sec:sec2} evaluates and compares the performance of these implementations and
 Section \ref{sec:conc} concludes this paper.
 
@@ -161,6 +159,8 @@ As stated in Section \ref{chap:introduction}, web workers communicate with the m
 to another, this data needs to be serialized to JSON. This paper also investigates how message sending affects the performance of the simulation by implementing a version
 where the data is shared using a SharedArrayBuffer JavaScript object. This tool only supports sharing the data in a binary format, but it makes the data accessible from all the worker threads.
 
+- Transferable Objects also used
+
 \section{Methods}
 \label{sec:methods}
 
@@ -178,20 +178,39 @@ case of this paper.
 JavaScript timestamp functionality provides a possibility log timestamps to the console from different stages of application execution. This paper uses these timestamps to
 measure the processing delays caused by updating the simulation state in the cases of different architectures.
 
-\subsection{Perceived quality}
-
-The perceived quality of the simulation implementations is also measured by observing the executing application user interface visually. These implementations are compared
-with respect to the amount of visually prominent jitter they produce. Any other deviations in user experience between the simulation versions are also investigated.
-
-\section{Evaluation}
+\section{Results}
 \label{sec:sec2}
 
-Here we present our evaluation of the implementations.
+\subsection{Moving the simulation out of the main thread}
+- Improvement in responsiveness with just a single worker [500, 1000, 2000, 4000]
 
-\section{Conclusions}
-\label{sec:conc}
+- The simulation can be run with more boids with multiple workers [main, 1 worker, 2 workers, 3 workers, 4 workers, [4000, 8000, 16000, 50k]]
 
-We conclude our research paper here.
+\subsection{Message passing methods}
+- Comparison of message passing methods overheads [1 worker, 2 worker, 3 worker, 4 worker, [[4000, 8000, 16000, 50k]] (four subplots one per boid number, each subplot has message passing method on x-axel and overheads on y-axel)
+
+- parsing vs cloning with dummy data (implement serializeComplex + tickComplex to pass complex (deep) data in order to test parsing)
+
+\section{Discussion}
+\label{sec:disc}
+
+- Why is structured cloning slow?
+- How good are the performance improvements? (not very good)
+- How good were results in references? (better)
+- Why are our results not as significant? (example cases dont require synchronization and merging)
+
+
+Our architecture could still be improved.
+
+
+
+
+\section{Future Work}
+\label{sec:ftr}
+- How could our architecture be improved? (Grid could be improved, synchronization between grids using Atomics, use serialized data instead of complex data structures => make workers just computational units => increase in ease of development )
+
+- browser differences
+- best comparison methodology
 
 \printbibliography[title={References}]
 
