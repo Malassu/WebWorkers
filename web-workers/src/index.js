@@ -1,13 +1,24 @@
 import App from "./App.js";
 
-// Canvas setup
-// const canvas = document.getElementById('testCanvas');
-// const { width, height } = canvas;
-// canvas.style.border = "1px solid black";
-// const ctx = canvas.getContext('2d');
+const config = {
+  numOfBoids: 4000,
+  bounds: {
+    x: [0, 1800],
+    y: [0, 900]
+  },
+  boidRadius: 3,
+  collision: true,
+  explosion: true,
+  explosionIntesity: 100,
+  explosionsPerTick: 1,
+  explosionRadius: 100,
+  maxSpeed: 2,
+}
+
+const workerCount = 1;
 
 window.onload = () => {
-  const app = new App();
+  const app = new App(config, workerCount);
   app.reset();
 
   app.on("simulation-timestamps", ({ parallelTick, timeTook, workers }) => {
@@ -16,17 +27,15 @@ window.onload = () => {
     const avgTickElement = document.querySelector("#avgTick");
     const timeTookElement = document.querySelector("#timeTook");
 
+    if(Math.round(1 / parallelTick * 100000) / 100 != Infinity) {
+      app.report.appendTick(parallelTick);
+    }
+
     timeTookElement.innerHTML = Math.round(1 / parallelTick * 100000) / 100;
     parallelTickElement.innerHTML = parallelTick;
     avgEntireWorkerElement.innerHTML = workers.reduce((acc, curr) => acc + curr.allTime, 0) / workers.length;
     avgTickElement.innerHTML = workers.reduce((acc, curr) => acc + curr.tickTime, 0) / workers.length;
   });
-  // Setup UI
-  // const toggleOverlay = document.querySelector("#toggleOverlay");
-  // toggleOverlay.addEventListener('click', event => {
-  //   const overlay = document.querySelector(".overlay");
-  //   overlay.style.display === "none" ? overlay.style.display = "table" : overlay.style.display = "none";
-  // });
 
   const addButton = document.querySelector("#addButton");
   addButton.addEventListener('click', event => {
@@ -34,34 +43,11 @@ window.onload = () => {
     app.addBoids(amount);
   });
 
-  // const collisionsCheckbox = document.querySelector("#collisions");
-  // collisionsCheckbox.addEventListener('click', event => {
-  //   app.setWorldState('collision', collisionsCheckbox.checked);
-  // });
-
-  // const explosionsSlider = document.querySelector("#explosions");
-  // const explosionFreq = document.querySelector("#explosionFreq")
-  // explosionsSlider.addEventListener('change', event => {
-  //   const freq = explosionsSlider.value / 100;
-  //   explosionFreq.innerHTML = freq; 
-  //   if (freq > 0) {
-  //     app.setWorldState('explosion', true);
-  //     app.setWorldState('explosionProb', freq / 10);
-  //   } else {
-  //     app.setWorldState('explosion', false);
-  //   }
-  // });
-
   document.querySelectorAll(".interface-selector").forEach(radioButton => {
     radioButton.onclick = () => {
       app.changeDataIntreface(radioButton.dataset.interfaceType);
     };
   });
-
-  // const resetButton = document.querySelector("#resetButton");
-  // resetButton.addEventListener('click', event => {
-  //   app.reset();
-  // });
 
   const startButton = document.querySelector("#startButton");
   startButton.addEventListener('click', event => {

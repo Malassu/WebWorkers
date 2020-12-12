@@ -3,30 +3,44 @@ import CanvasRenderer from "./renderer/CanvasRenderer.js";
 import Worker from "worker-loader!./worker/SimpleWorkerPlanner.js";
 import BinaryBoidParser from "./simulation/boids/BinaryBoidParser.js";
 
+class Report {
+  constructor(numOfBoids, numOfWorkers) {
+    this.tickTimes = [];
+    this.fpsVals = [];
+    this.numOfBoids = numOfBoids;
+    this.numOfWorkers = numOfWorkers;
+  }
+  appendTick(tickTime) {
+    var len = this.tickTimes.length;
+    if (len == 1000) {
+      var fpsSum = 0;
+      var ticktimesSum = 0;
+      for( var i = 0; i < len; i++ ){
+        fpsSum += this.fpsVals[i]
+        ticktimesSum += this.tickTimes[i]
+      }
+      console.log(
+        "Stats after 1000 ticks with " + this.numOfWorkers + " workers and " + this.numOfBoids + " boids:", '\n',
+        "Average tick time: " + (ticktimesSum / len) + ' ms', '\n',
+        "Average FPS: " + (fpsSum / len));
+      this.tickTimes.push(tickTime);
+      this.fpsVals.push(Math.round(1 / tickTime * 100000) / 100);
+    }
+    else if (len > 1000) { }
+    else {
+      this.tickTimes.push(tickTime);
+      this.fpsVals.push(Math.round(1 / tickTime * 100000) / 100);
+    }
+  }
+}
+
 class App {
-  constructor() {
+  constructor(config, workerCount) {
 
     // BoidWorld setup
-    this.width = 1800;
-    this.height = 900;
-    this.workerCount = 4;
-
-    this.config = {
-      numOfBoids: 0,
-      bounds: {
-        x: [0, this.width],
-        y: [0, this.height]
-      },
-      boidRadius: 3,
-      collision: true,
-      explosion: true,
-      explosionIntesity: 100,
-      explosionsPerTick: 1,
-      explosionRadius: 100,
-      maxSpeed: 2,
-    }
-
-
+    this.workerCount = workerCount;
+    this.config = config;
+    this.report = new Report(config.numOfBoids, workerCount);
 
     this._renderer = new PixiRenderer(this.config);
     this.pixi = true;
