@@ -1,30 +1,46 @@
 import BoidWorld from "./simulation/boids/BoidWorld.js";
 import PixiRenderer from "./renderer/PixiRenderer.js"
 
+class Report {
+  constructor(numOfBoids) {
+    this.tickTimes = [];
+    this.fpsVals = [];
+    this.numOfBoids = numOfBoids;
+  }
+  appendTick(tickTime) {
+    var len = this.tickTimes.length;
+    if (len == 1000) {
+      var fpsSum = 0;
+      var ticktimesSum = 0;
+      for( var i = 0; i < len; i++ ){
+        fpsSum += this.fpsVals[i]
+        ticktimesSum += this.tickTimes[i]
+      }
+      console.log(
+        "Stats after 1000 ticks with " + this.numOfBoids + " boids:", '\n',
+        "Average tick time: " + (ticktimesSum / len) + ' ms', '\n',
+        "Average FPS: " + (fpsSum / len));
+      this.tickTimes.push(tickTime);
+      this.fpsVals.push(Math.round(1 / tickTime * 100000) / 100);
+    }
+    else if (len > 1000) { }
+    else {
+      this.tickTimes.push(tickTime);
+      this.fpsVals.push(Math.round(1 / tickTime * 100000) / 100);
+    }
+  }
+}
+
 class App {
-  constructor() {
+  constructor(config) {
 
     // BoidWorld setup
-    const width = 1800;
-    const height = 900;
-    this.simulation = new BoidWorld({ 
-      numOfBoids: 0, 
-      bounds: {
-        x: [0, width],
-        y: [0, height]
-      },
-      boidRadius: 5,
-      collision: true,
-      explosion: true,
-      explosionIntesity: 100,
-      explosionsPerTick: 1,
-      explosionRadius: 100,
-      maxSpeed: 2,
-    });
+    this.simulation = new BoidWorld(config);
 
     this._renderer = new PixiRenderer(this.simulation)
     this._eventListeners = {};
     this.tickVal = 0;
+    this.report = new Report(config.numOfBoids);
   }
 
   restart() {
@@ -50,6 +66,7 @@ class App {
     const simulationTickElement = document.querySelector("#simulationTick");
     entireTickElement.innerHTML = Math.round(1 / tickTime * 100000) / 100;
     simulationTickElement.innerHTML = tickTime;
+    this.report.appendTick(tickTime);
     this._renderer.render();
     window.requestAnimationFrame(this.loop.bind(this));
   }

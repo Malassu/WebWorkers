@@ -1,7 +1,22 @@
 import App from "./App.js";
 
+const config = {
+    numOfBoids: 4000,
+    bounds: {
+      x: [0, 1800],
+      y: [0, 900]
+    },
+    boidRadius: 5,
+    collision: true,
+    explosion: true,
+    explosionIntesity: 100,
+    explosionsPerTick: 1,
+    explosionRadius: 100,
+    maxSpeed: 2,
+}
+
 window.onload = () => {
-  const app = new App();
+  const app = new App(config);
 
   // Setup UI
   const toggleOverlay = document.querySelector("#toggleOverlay");
