@@ -1,12 +1,12 @@
 import App from "./App.js";
 
 const config = {
-    numOfBoids: 4000,
+    numOfBoids: 500,
     bounds: {
       x: [0, 1800],
       y: [0, 900]
     },
-    boidRadius: 5,
+    boidRadius: 3,
     collision: true,
     explosion: true,
     explosionIntesity: 100,
