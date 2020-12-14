@@ -35,13 +35,14 @@ class Report {
 }
 
 class App {
-  constructor(config, workerCount) {
+  constructor(worldConfig, workerCount, interfaceType) {
 
     // BoidWorld setup
     this.workerCount = workerCount;
-    this.config = config;
-    this.report = new Report(config.numOfBoids, workerCount);
-
+    this.config = worldConfig;
+    this.interfaceType = interfaceType;
+    this.report = new Report(worldConfig.numOfBoids, workerCount);
+  
     this._renderer = new PixiRenderer(this.config);
     this.pixi = true;
     // this._renderer = new CanvasRenderer(this.config);
@@ -71,7 +72,7 @@ class App {
   }
 
   reset() {
-    this._planner.postMessage({msg: 'planner-create', workerCount: this.workerCount, config: this.config});
+    this._planner.postMessage({msg: 'planner-create', workerCount: this.workerCount, config: this.config, interfaceType: this.interfaceType});
   }
 
   start() {
@@ -80,6 +81,7 @@ class App {
   }
 
   changeDataIntreface(type) {
+    this.interfaceType = type;
     this._planner.postMessage({msg: 'change-data-interface', type });
   }
 

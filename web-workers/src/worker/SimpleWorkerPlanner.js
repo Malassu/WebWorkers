@@ -22,7 +22,7 @@ class SimpleWorkerPlanner {
   }
   
   // Create BoidWorld within planner context and initialize workers
-  create(workerCount, config) {
+  create(workerCount, config, interfaceType) {
     this.simulation = new BoidWorld(config);
 
     this.transferableArrays = this.simulation.getTransferableBoidArrays(workerCount);
@@ -38,7 +38,7 @@ class SimpleWorkerPlanner {
       'transferable-binary': this.parallelTickTransferableBinary
     };
 
-    this.parallelTick = this.interfaceTypes['shared-binary'];
+    this.parallelTick = this.interfaceTypes[interfaceType];
     
     this.workerCount = workerCount;
     this.readyForNextTick = true;
@@ -378,7 +378,7 @@ class SimpleWorkerPlanner {
 
   onMainThreadMessage(e) {
     if (e.data.msg == 'planner-create') {
-      this.create(e.data.workerCount, e.data.config);
+      this.create(e.data.workerCount, e.data.config, e.data.interfaceType);
     } else if (e.data.msg == 'planner-start') {
       this.loop();
     }

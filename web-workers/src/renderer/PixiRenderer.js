@@ -18,7 +18,6 @@ class PixiRenderer {
     }
 
     PIXI.utils.sayHello(type);
-    console.log(config);
 
     this.app = new PIXI.Application({width: this.width, height: this.height, forceCanvas: true, type});
     this.app.renderer.backgroundColor = 0xFFFFFF;

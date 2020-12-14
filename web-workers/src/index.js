@@ -1,7 +1,6 @@
 import App from "./App.js";
 
-const config = {
-  numOfBoids: 4000,
+let worldConfig = {
   bounds: {
     x: [0, 1800],
     y: [0, 900]
@@ -15,10 +14,36 @@ const config = {
   maxSpeed: 2,
 }
 
-const workerCount = 1;
+/**
+ * START SCRIPT EXAMPLE:
+ * WORKERS=2 INTERFACE=shared-binary BOIDS=8000 npm start
+ * 
+ * WORKERS
+ * 1, 2, 3, 4
+ * 
+ * INTERFACE
+ * json
+ * structured-cloning
+ * shared-binary
+ * transferable-binary
+ * 
+ * BOIDS
+ * 4000, 8000, 16000, 50000
+ * 
+ */
+
+const workerCount = WORKERS !== undefined ? parseInt(WORKERS) : 1;
+const interfaceType = INTERFACE !== undefined ? INTERFACE : 'json';
+const numOfBoids = BOIDS !== undefined ? parseInt(BOIDS) : 4000;
+
+console.log("WORKERS: ", workerCount);
+console.log("INTERFACE: ", interfaceType);
+console.log("BOIDS: ", numOfBoids);
+
+worldConfig.numOfBoids = numOfBoids;
 
 window.onload = () => {
-  const app = new App(config, workerCount);
+  const app = new App(worldConfig, workerCount, interfaceType);
   app.reset();
 
   app.on("simulation-timestamps", ({ parallelTick, timeTook, workers }) => {
@@ -42,6 +67,9 @@ window.onload = () => {
     const amount = document.getElementById("amount").value;
     app.addBoids(amount);
   });
+
+  const interfaceInitial = document.querySelector(`[data-interface-type="${interfaceType}"]`);
+  interfaceInitial.checked = "checked"
 
   document.querySelectorAll(".interface-selector").forEach(radioButton => {
     radioButton.onclick = () => {
