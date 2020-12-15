@@ -35,7 +35,9 @@ class SimpleWorkerPlanner {
       'json': this.parallelTickJson,
       'structured-cloning': this.parallelTickClone,
       'shared-binary': this.parallelTickSharedBinary,
-      'transferable-binary': this.parallelTickTransferableBinary
+      'transferable-binary': this.parallelTickTransferableBinary,
+      'complex-clone': this.parallelTickComplexClone,
+      'complex-json': this.parallelTickComplexJson
     };
 
     this.parallelTick = this.interfaceTypes[interfaceType];
@@ -99,6 +101,31 @@ class SimpleWorkerPlanner {
   // Take out values that are not transferable
   updateTransferables({ msg, index, explodionIndices, tickTime, allTime, start, end, pass, ...rest }) {
     this.transferableArrays[index] = rest;
+  }
+
+
+  parallelTickComplexJson() {
+    const explodionIndices = this.simulation.generateExplosions();
+    // Split the workload among workers
+    const numOfBoids = this.simulation.getState("numOfBoids");
+    const chunkSize = Math.round(numOfBoids/this.workerCount);
+    this.workers.forEach((worker, i) => {
+      const start = i*chunkSize;
+      const end = (i === this.workerCount-1) ? numOfBoids : start + chunkSize;
+      worker.postMessage({msg: 'worker-tick-complex-json', start, end, explodionIndices});
+    });    
+  }
+
+  parallelTickComplexClone() {
+    const explodionIndices = this.simulation.generateExplosions();
+    // Split the workload among workers
+    const numOfBoids = this.simulation.getState("numOfBoids");
+    const chunkSize = Math.round(numOfBoids/this.workerCount);
+    this.workers.forEach((worker, i) => {
+      const start = i*chunkSize;
+      const end = (i === this.workerCount-1) ? numOfBoids : start + chunkSize;
+      worker.postMessage({msg: 'worker-tick-complex-clone', start, end, explodionIndices});
+    });    
   }
 
   parallelTickSharedBinary() {
@@ -216,6 +243,18 @@ class SimpleWorkerPlanner {
     //    i.e. the workload.
 
     switch (e.data.msg) {
+      case 'ticked-complex':
+        this.tickedWorkerCount++;
+        this.workerTimeStamps = this.workerTimeStamps.concat((({ allTime }) => ({ allTime }))(e.data));
+       
+        if (this.tickedWorkerCount === this.workerCount) {
+          // reset ticked count and request next tick
+          this.tickStart = performance.now() - this.tickStart;
+          this.tickedWorkerCount = 0;
+          this.readyForNextTick = true;
+        }
+        return;
+
       case 'planner-json-merge':
         this.tickedWorkerCount++;
         this.workerTimeStamps = this.workerTimeStamps.concat((({ tickTime, allTime }) => ({ tickTime, allTime }))(e.data));

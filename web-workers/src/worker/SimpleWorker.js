@@ -15,6 +15,26 @@ self.onmessage = function(e) {
 
       return;
 
+    case 'worker-tick-complex-json':
+      const startTimeAllComplexJson = performance.now();
+
+      // Post updated local state to main thread
+      postMessage({
+        msg: 'ticked-complex', start: e.data.start, end: e.data.end,
+        boids: self._localSimulation.serializedComplexJson(e.data.start, e.data.end), allTime: performance.now() - startTimeAllComplexJson
+      });
+      return;
+
+    case 'worker-tick-complex-clone':
+      const startTimeAllComplex = performance.now();
+
+      // Post updated local state to main thread
+      postMessage({
+        msg: 'ticked-complex', start: e.data.start, end: e.data.end,
+        boids: self._localSimulation.serializedComplex(e.data.start, e.data.end), allTime: performance.now() - startTimeAllComplex
+      });
+      return;
+
     case 'worker-tick-json':
       // If boids are added dynamically, the binary buffer needs to be updated.
 

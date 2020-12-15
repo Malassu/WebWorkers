@@ -496,6 +496,24 @@ class BoidWorld {
     return JSON.stringify(this.serializedBoids(start, end));
   }
 
+  serializedComplex(start=0, end=this._boids.length) {
+    var depth = 5;
+
+    return this._boids.map(boid => {
+      const nestedBoid = Object.assign({}, boid.serializedBoid);
+      var ref = nestedBoid;
+      for (let i=0; i < depth; i++) {
+        const cur = this._boids[i];
+        ref[`innerBoid${cur.id}`] = cur.serializedBoid;
+        ref = ref[`innerBoid${cur.id}`];
+      }
+      return nestedBoid;
+    })
+  }
+
+  serializedComplexJson(start=0, end=this._boids.length) {
+    return JSON.stringify(this.serializedComplex(start, end));
+  }
   
   serializedBoids(start=0, end=this._boids.length) {
     return this._boids.slice(start, end).map(boid => {
