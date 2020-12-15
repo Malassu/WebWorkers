@@ -110,7 +110,7 @@ Verdú et al. \cite{verdu} examine how utilizing web workers scales the performa
 workers in a synchronous ray tracing application and in an asynchronous hash calculation task. They found that the optimal number of workers depends on various factors 
 such as the CPU architecture, the worker execution model and the browser. Using a large number of web workers did not prove to be beneficial compared to using only a few.
 
-\section{Implementation}
+\section{Test Application}
 \label{sec:implementation}
 
 This section covers the different architectures of the physics simulation application implemented in this paper. The main idea of the simulation is to generate a given amount
@@ -127,33 +127,63 @@ Figure \ref{fig:figure2} shows the default user interface of the application run
 	\label{fig:figure2}
 \end{figure}
 
-\subsection{Default simulation} 
-\label{sec:default}
+\subsection{Architectural Components}
+\label{sec:basic}
 
-The first implementation of the physics simulation only utilized the main DOM thread in computation. This default architecture of the application implemented classes for the
-spherical objects, their interactions and the physics stage. A class utilizing the PIXI JavaScript library was implemented for managing the game loop, rendering and
-physics simulation objects.
+The basic architectural components of the test application are PixiRenderer, App, and BoidWorld. PixiRenderer employs Pixi.js (add ref) HTML5 rendering library to visualize the state of the simulation objects on a HTML5 Canvas. This state consists of the position of each object and whether the object has collided or exploded, in order to play appropriate animations. The state is passed to the renderer from App, which manages both the user inputs modifying the simulation configuration, and the central game loop determining the frequency of ticks performed by the simulation. The simulation is implemented within the BoidWorld component. It encloses the computation of forces upon objects within the simulation. In the multi-threaded version BoidWorld also implements serialization and merging methods to enable concurrent computation performed in separate local contexts.
 
-\subsection{Spatial partitioning} 
-\label{sec:spatial}
+% \subsection{Default simulation} 
+% \label{sec:default}
 
-The first architectural decision only optimized the simulation by partitioning the physics space and it did not yet include web workers. This implementation added a grid object used in constructing the physics space in a tree data structure.
+% The first implementation of the physics simulation only utilized the main DOM thread in computation. This default architecture of the application implemented classes for the
+% spherical objects, their interactions and the physics stage. A class utilizing the PIXI JavaScript library was implemented for managing the game loop, rendering and
+% physics simulation objects.
 
-\subsection{One worker solution} 
-\label{sec:1workers}
+\subsection{Single-threaded Application}
+\label{sec:single}
 
-After the spatial partitioning solution, an implementation with a single web worker communicating with the main thread was made. This version initialized the objects used
-in physics simulation only in the worker thread. The worker thread executed the simulation and communicated the state information to the main thread via the messaging 
-interface. The only responsibility of the main thread was then to read the received information and render the graphics accordingly.
+The base application performs all computation and rendering updates in the main DOM thread. Majority of the computation time is spent on finding neighboring objects when simulating collisions. Therefore, a spatial partitioning algorithm was implemented in the simulation to increase the performance of collision detection. A hierarchy of neighboring objects is updated in a grid-like object after each simulation tick. (more on spatial partitioning benefits? add ref?).
 
-\subsection{Multiple workers solution} 
-\label{sec:nworkers}
+% \subsection{Spatial partitioning} 
+% \label{sec:spatial}
 
-After re-factoring the application architecture to support calculating the simulation steps in a worker thread, the number of web workers was increased. In this solution,
-the main DOM thread communicated with a worker planner class, that organized and divided the computational tasks to be passed to multiple workers. After all the worker
-threads have finished calculating their respective simulation steps, the changes to the data have to be assembled, merged and rendered in the main thread.
+% The first architectural decision only optimized the simulation by partitioning the physics space and it did not yet include web workers. This implementation added a grid object used in constructing the physics space in a tree data structure.
 
-\subsection{Data sharing}
+% \subsection{One worker solution} 
+% \label{sec:1workers}
+
+% After the spatial partitioning solution, an implementation with a single web worker communicating with the main thread was made. This version initialized the objects used
+% in physics simulation only in the worker thread. The worker thread executed the simulation and communicated the state information to the main thread via the messaging 
+% interface. The only responsibility of the main thread was then to read the received information and render the graphics accordingly.
+
+\subsection{Multi-threaded Application}
+The multi-threaded application extends the aforementioned architecture with SimpleWorkerPlanner and SimpleWorker components. The planner component acts as a supervisor layer between the app and worker threads. It also takes responsibility of the game loop from the App component, whereas the computation is divided among web workers implemented in SimpleWorker. Moreover, the planner itself is executed within a worker context to reduce the workload of the main thread to solely rendering. The planner acts as a container for the state of the main simulation while distributing the main computational workload to worker threads.
+
+Since the simulation is implemented as a self-contained BoidWorld component, each worker must maintain a local copy used as an execution context for the concurrent simulation ticks. Each worker thread performs the tick only on a given section of the simulation objects. However, since the objects inflict forces on each other, synchronization steps are required to preserve´the stability of the simulation. The message passing control mechanism is illustrated in figure \ref{fig:message_architecture}. Consequently, a simulation tick is divided to three synchronized operations:
+
+\begin{itemize}
+  \item Perform a local simulation tick in each worker
+  \item After all ticks are complete, merge local simulations
+  \item After all merges are complete, update main simulation state which is passed on to the renderer
+\end{itemize}
+
+The mechanism by which the simulation object data is shared across contexts depends on the message passing methods outlined below.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[scale=0.3]{figs/message_architecture.png}
+	\caption{Architecture.}
+	\label{fig:message_architecture}
+\end{figure}
+
+% \subsection{Multiple workers solution} 
+% \label{sec:nworkers}
+
+% After re-factoring the application architecture to support calculating the simulation steps in a worker thread, the number of web workers was increased. In this solution,
+% the main DOM thread communicated with a worker planner class, that organized and divided the computational tasks to be passed to multiple workers. After all the worker
+% threads have finished calculating their respective simulation steps, the changes to the data have to be assembled, merged and rendered in the main thread.
+
+\subsection{Data Sharing}
 
 As stated in Section \ref{chap:introduction}, web workers communicate with the main thread and other threads via message sending. If data needs to be passed from one thread
 to another, this data needs to be serialized to JSON. This paper also investigates how message sending affects the performance of the simulation by implementing a version
@@ -166,7 +196,7 @@ where the data is shared using a SharedArrayBuffer JavaScript object. This tool 
 
 This section describes the methods used for evaluating the different architectures of the simulation application implemented for the purposes of this paper. The metrics used for evaluating it's performance are FPS, memory usage, message transfer time, processing delay and changes in user experience.
 
-\subsection{Developer tools}
+\subsection{Developer Tools}
 
 Browsers such like Firefox\footnote{https://developer.mozilla.org/en-US/docs/Tools} and Chrome\footnote{https://developers.google.com/web/tools/chrome-devtools} offer a 
 possibility to more closely inspect web services through developer tools. These tools offer insights into how demanding a given application
@@ -204,10 +234,9 @@ Our architecture could still be improved.
 
 
 
-
 \section{Future Work}
 \label{sec:ftr}
-- How could our architecture be improved? (Grid could be improved, synchronization between grids using Atomics, use serialized data instead of complex data structures => make workers just computational units => increase in ease of development )
+- How could our architecture be improved? (Grid could be improved, synchronization between grids and simulation state using Atomics instead of message passing, use serialized data instead of complex data structures => make workers just computational units => increase in ease of development )
 
 - browser differences
 - best comparison methodology
