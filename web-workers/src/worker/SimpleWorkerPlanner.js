@@ -384,7 +384,7 @@ class SimpleWorkerPlanner {
 
           // merge worker states to main simulation when all workers have ticked
           if (this.tickedWorkerCount % this.workerCount === 0) {
-            if (e.data.pass + 1 === this.workerCount) {
+            if (e.data.pass + 1 >= this.workerCount) {
               this.tickStart = performance.now() - this.tickStart;
               this.tickedWorkerCount = 0;
               this.readyForNextTick = true;
