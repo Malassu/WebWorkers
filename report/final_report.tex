@@ -1,5 +1,4 @@
-\documentclass[conference]{IEEEtran}
-
+\documentclass[conference, 9pt]{IEEEtran}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{graphicx}
@@ -27,10 +26,9 @@
 \input{vars}
 \linespread{1.2}
 
-\bibliography{sources}
+
 
 \begin{document}
-
 \title{Implementing an HTML5 mobile simulation utilizing web workers}
 
 \author{authored by\\
@@ -63,7 +61,7 @@ HTML5 introduced web workers as a way to utilize concurrent computation in the d
 computationally demanding applications with the web browser while attempting to maintain a high quality of experience.
 
 This paper follows the implementation of a computer physics simulation and compares the architectural decisions that can be applied to it. Different architectures with and 
-without web workers are analysed and compared in terms of their performance metrics such as FPS, memory usage, processing delay and message transfer time.
+without web workers are analysed and compared.% in terms of their performance metrics such as FPS, memory usage, processing delay and message transfer time.
  
 \end{abstract}
 
@@ -161,18 +159,18 @@ The multi-threaded application extends the aforementioned architecture with Simp
 
 Since the simulation is implemented as a self-contained BoidWorld component, each worker must maintain a local copy used as an execution context for the concurrent simulation ticks. Each worker thread performs the tick only on a given section of the simulation objects. However, since the objects inflict forces on each other, synchronization steps are required to preserve´the stability of the simulation. The message passing control mechanism is illustrated in figure \ref{fig:message_architecture}. Consequently, a simulation tick is divided to three synchronized operations:
 
-\begin{itemize}
+\begin{enumerate}
   \item Perform a local simulation tick in each worker
   \item After all ticks are complete, merge local simulations
   \item After all merges are complete, update main simulation state which is passed on to the renderer
-\end{itemize}
+\end{enumerate}
 
 The mechanism by which the simulation object data is shared across contexts depends on the message passing methods outlined below.
 
 \begin{figure}[ht]
 	\centering
 	\includegraphics[scale=0.3]{figs/message_architecture.png}
-	\caption{Architecture.}
+	\caption{Message passing architecture.}
 	\label{fig:message_architecture}
 \end{figure}
 
@@ -186,10 +184,29 @@ The mechanism by which the simulation object data is shared across contexts depe
 \subsection{Data Sharing}
 
 As stated in Section \ref{chap:introduction}, web workers communicate with the main thread and other threads via message sending. If data needs to be passed from one thread
-to another, this data needs to be serialized to JSON. This paper also investigates how message sending affects the performance of the simulation by implementing a version
-where the data is shared using a SharedArrayBuffer JavaScript object. This tool only supports sharing the data in a binary format, but it makes the data accessible from all the worker threads.
+to another, this data needs to be serialized and sent via the postMessage() interface \cite{mdnCloning}. This paper investigates different methods available for passing data with postMessage. The considered methods can be categorized as copying, sharing and transfering.
 
-- Transferable Objects also used
+Copying is the simplest method to utilize. The method involves passing the serialized either directly to postMessage or by first converting the data to a string utilizing JSON.stringify. When Web Workers were first instroduced, sending JSON strings between contexts was the standard. Since then the postMessage() interface has been extended to utilize structured cloning. Structured cloning recursively copies the given data from the sender to the recipient \cite{mdnCloning}. 
+    
+Data can be directly shared among workers utilizing the SharedArrayBuffer class \cite{mdnShared}. However, this buffer only supports byte data;  more complex data has to be encoded and decoded. To support utilization of the byte data stored in a buffer, JavaScript supports typed arrays that provide an interface for interpreting the stored data to numeric types, such as Uint32Array and Float32Array. A SharedArrayBuffer can be sent via a postMessage() call. The operation does not copy the underlying memory, just the interface used to access it. Notably, SharedArrayBuffer was disable in 2018 due to the Spectre exploit and was only recently re-enable \cite{mdnShared}. Furthermore, utilizing shared memory requires running an application in a secure context.
+
+Modern browsers support transferal of data utilizing the abstract Transferable interface. Developers can't declare their own objects as transferable, instead the interface is implemented on a lower level a supported by a some JavaScript types \cite{mdnTransferable}. Transferring, is analogous to calling a move operation in C++. The ownership of the memory area is transferred to the target context. As a result, the sender loses access to the data. Transferring data requires passing an array of transferables to postMessage as a second argument. 
+
+
+\resizebox{\columnwidth}{!}{
+  \begin{tabular}{ |p{3cm}||p{2cm}|  }
+    \hline
+    \multicolumn{2}{|c|}{Message Passing Methods} \\
+  \hline
+    Method& Data Type\\
+    \hline
+    Json   & Copy    \\
+    Structured cloning&   Copy  \\
+    SharedArrayBuffer & Share \\
+    Transferable objects   &Transfer \\
+    \hline
+  \end{tabular}
+}
 
 \section{Methods}
 \label{sec:methods}
@@ -208,38 +225,67 @@ case of this paper.
 JavaScript timestamp functionality provides a possibility log timestamps to the console from different stages of application execution. This paper uses these timestamps to
 measure the processing delays caused by updating the simulation state in the cases of different architectures.
 
+\subsection{Test Environment}
+\label{sec:environment}
+
+The test were ran on x.
+
 \section{Results}
 \label{sec:sec2}
 
+
 \subsection{Moving the simulation out of the main thread}
-- Improvement in responsiveness with just a single worker [500, 1000, 2000, 4000]
 
-- The simulation can be run with more boids with multiple workers [main, 1 worker, 2 workers, 3 workers, 4 workers, [4000, 8000, 16000, 50k]]
+The first test describes the effect of moving the simulation out of the main thread. The effect is measured by average performance over the first 1000 simulation ticks. The effect of a multi-worker setup is also measured. The data used for the multi-threaded version is serialized json.
 
-\subsection{Message passing methods}
-- Comparison of message passing methods overheads [1 worker, 2 worker, 3 worker, 4 worker, [[4000, 8000, 16000, 50k]] (four subplots one per boid number, each subplot has message passing method on x-axel and overheads on y-axel)
+% - Improvement in responsiveness with just a single worker [500, 1000, 2000, 4000]
+% - The simulation can be run with more boids with multiple workers [main, 1 worker, 2 workers, 3 workers, 4 workers, [4000, 8000, 16000, 50k]]
 
-- parsing vs cloning with dummy data (implement serializeComplex + tickComplex to pass complex (deep) data in order to test parsing)
+\begin{figure}[ht]
+	\centering
+	\includegraphics[scale=0.5]{figs/plot_boids.png}
+	\caption{Simulation step time test results}
+	\label{fig:step_time}
+\end{figure}
 
-\section{Discussion}
+The results of the first test indicate an initial performance hit when moving the computation into 1 worker. Any performance gain from a faster execution context seems to be lost in the overhead cost of passing serialized json data. Moreover, the performance improvements with more than 1 worker are almost negligible, especially contrasted by the results in related work, such as \cite{verdu}. 
+
+\subsection{Comparison of message passing overhead}
+
+The second test emphasizes the overhead cost incurred by various message passing methods.
+
+% - Comparison of message passing methods overheads [1 worker, 2 worker, 3 worker, 4 worker, [[4000, 8000, 16000, 50k]] (four subplots one per boid number, each subplot has message passing method on x-axel and overheads on y-axel)
+
+
+The results of the second test express the computational benefit of data sharing over copying. Interestingly, the structured cloning algorithm performs the worst out of all methods despite being the default data sharing method in most browsers. Since the simulation data is by definition shallow, additional tests were performed with deeply nested data in order to investigate whether the performance of structured cloning might improve relative to serialized json. However, these tests ultimately provided no additional clues for the poor performance, since passing serialized json remained faster out of the two.
+
+% The third test?
+% - parsing vs cloning with dummy data (implement serializeComplex + tickComplex to pass complex (deep) data in order to test parsing)
+
+\section{Conclusions}
 \label{sec:disc}
 
-- Why is structured cloning slow?
-- How good are the performance improvements? (not very good)
-- How good were results in references? (better)
-- Why are our results not as significant? (example cases dont require synchronization and merging)
+Our results indicate structured cloning performs considerably worse compared to the other data passing methods. The issue is long standing as several developers have reported similar results \cite{slowMessage}\cite{highPerWorkers}. Structured cloning utilizes serialization and deserialization methods defined in the HTML specification \cite{html}. Based on the specification, we hypothesis that structured cloning is slower in our application due to ambiguity. Parsing JSON data with JSON.parse is faster as the parser operates only on a subset of Javascript types. 
 
-
-Our architecture could still be improved.
+The simulation in its current form relies on shared state which necessitates additional synchronization steps. However, the architecture of the test application could also be further optimized for individual data sharing methods. For example, synchronization in shared context could be accomplished by the use of Atomics instead of message passing. The simulation itself could be modified so that each worker would not be required to maintain a local copy, but instead access to a shared context would be provided when performing computations.
 
 
 
-\section{Future Work}
-\label{sec:ftr}
-- How could our architecture be improved? (Grid could be improved, synchronization between grids and simulation state using Atomics instead of message passing, use serialized data instead of complex data structures => make workers just computational units => increase in ease of development )
 
-- browser differences
-- best comparison methodology
+
+% - Why is structured cloning slow?
+% - How good are the performance improvements? (not very good)
+% - How good were results in references? (better)
+% - Why are our results not as significant? (example cases dont require synchronization and merging)
+
+% Our architecture could still be improved.
+
+% \section{Future Work}
+% \label{sec:ftr}
+% - How could our architecture be improved? (Grid could be improved, synchronization between grids and simulation state using Atomics instead of message passing, use serialized data instead of complex data structures => make workers just computational units => increase in ease of development )
+
+% - browser differences
+% - best comparison methodology
 
 \printbibliography[title={References}]
 
